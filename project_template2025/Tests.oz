@@ -79,14 +79,30 @@ define
    end
 
    proc {TestChords P2T}
-      skip
+      P = [[c4 e4 g4]]
+      E = [[
+            note(name:c octave:4 sharp:false duration:1.0 instrument:none)
+            note(name:e octave:4 sharp:false duration:1.0 instrument:none)
+            note(name:g octave:4 sharp:false duration:1.0 instrument:none)
+          ]]
+   in
+      {AssertEquals {P2T P} E "TestChords"}
    end
+   
 
    proc {TestIdentity P2T}
-      % test that extended notes and chord go from input to output unchanged
-      skip
+      P = [
+         note(name:a octave:3 sharp:true duration:2.0 instrument:none)
+         silence(duration:0.5)
+         [
+            note(name:c octave:4 sharp:false duration:1.0 instrument:none)
+            note(name:e octave:4 sharp:false duration:1.0 instrument:none)
+         ]
+      ]
+   in
+      {AssertEquals {P2T P} P "TestIdentity"}
    end
-
+   
    proc {TestDuration P2T}
       skip
    end
@@ -112,8 +128,12 @@ define
    end
 
    proc {TestEmptyChords P2T}
-     skip
+      P = [nil]  % Accord vide
+      E = [nil]
+   in
+      {AssertEquals {P2T P} E "TestEmptyChords"}
    end
+   
       
    proc {TestP2T P2T}
       {TestNotes P2T}
