@@ -79,7 +79,10 @@ define
    end
 
    proc {TestChords P2T}
-      skip
+      P2 = [a|c|e|nil]
+      E2 = [{NoteToExtended a} {NoteToExtended c} {NoteToExtended e}]
+   in
+      {AssertEquals {P2T [P2]} [E2] "TestChords: simple"}
    end
 
    proc {TestIdentity P2T}
