@@ -64,6 +64,12 @@ define
                  sharp:false
                  duration:1.0
                  instrument: none)
+         [] [N '#' O] then
+                  note(name:{StringToAtom [N]}
+                       octave:{StringToInt [O]}
+                       sharp:true
+                       duration:1.0
+                       instrument:none)
          end
       end
    end
@@ -79,7 +85,7 @@ define
    end
 
    proc {TestChords P2T}
-      P2 = [a|c|e|nil]
+      P2 = [a|c|e]
       E2 = [{NoteToExtended a} {NoteToExtended c} {NoteToExtended e}]
    in
       {AssertEquals {P2T [P2]} [E2] "TestChords: simple"}

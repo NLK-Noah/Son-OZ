@@ -27,12 +27,12 @@ define
                  sharp:false
                  duration:1.0
                  instrument:none)
-         [][N '#' O ] then
-            note(name:{StringToAtom [N]}
-            octave:{StringToInt [O]}
-            sharp:true
-            duration:1.0
-            instrument:none)
+         [] [N '#' O] then
+                    note(name:{StringToAtom [N]}
+                         octave:{StringToInt [O]}
+                         sharp:true
+                         duration:1.0
+                         instrument:none)
          end
       end
    end
@@ -44,11 +44,11 @@ define
          nil then nil 
       [] H|T then 
             if {IsAtom H} then 
-               {NoteToExtended H} | {ChordToExtendedChord T}
+               [{NoteToExtended H}] | {ChordToExtendedChord T}
             elseif {IsRecord H} andthen ({Label H} == note orelse {Label H} == silence) then
                H | {ChordToExtendedChord T}
             else 
-               {ChordToExtendedChord T}
+                {ChordToExtendedChord T}
             end
       end
    end
@@ -68,10 +68,16 @@ define
                H | {PartitionToTimedList T}
    
             elseif {IsRecord H} andthen {Label H} == '|' then 
-               {ChordToExtendedChord H} | {PartitionToTimedList T}
-   
+                local ExtendedChord = {ChordToExtendedChord H}
+                in
+                    if ExtendedChord == nil then 
+                        {PartitionToTimedList T}
+                    else 
+                        [ExtendedChord] | {PartitionToTimedList T}
+                    end
+                end
             else 
-               {PartitionToTimedList T}
+                {NoteToExtended H} | {PartitionToTimedList T}
             end
       end
    end 
