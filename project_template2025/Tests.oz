@@ -146,7 +146,6 @@ define
     TEST Mix
 
    proc {TestSamples P2T Mix}
-      skip
       E1 = [0.1 ~0.2 0.3]
       M1 = [samples(E1)]
    in
