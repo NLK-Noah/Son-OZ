@@ -85,8 +85,12 @@ define
    end
 
    proc {TestChords P2T}
-      P2 = [a|c|e]
-      E2 = [{NoteToExtended a} {NoteToExtended c} {NoteToExtended e}]
+      P2= [[c4 e4 g4]]
+      E2= [[
+            note(name:c octave:4 sharp:false duration:1.0 instrument:none)
+            note(name:e octave:4 sharp:false duration:1.0 instrument:none)
+            note(name:g octave:4 sharp:false duration:1.0 instrument:none)
+          ]]
    in
       {AssertEquals {P2T [P2]} [E2] "TestChords: simple"}
    end
@@ -139,9 +143,10 @@ define
    end
 
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-   % TEST Mix
+    TEST Mix
 
    proc {TestSamples P2T Mix}
+      skip
       E1 = [0.1 ~0.2 0.3]
       M1 = [samples(E1)]
    in

@@ -40,18 +40,28 @@ define
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
    fun {ChordToExtendedChord Chord}
-      case Chord of
-         nil then nil 
-      [] H|T then 
-            if {IsAtom H} then 
-               [{NoteToExtended H}] | {ChordToExtendedChord T}
-            elseif {IsRecord H} andthen ({Label H} == note orelse {Label H} == silence) then
-               H | {ChordToExtendedChord T}
-            else 
-                {ChordToExtendedChord T}
+    case Chord of
+       nil then nil 
+    [] H|T then 
+        fun {ChordToExtendedChordAux H}
+            case H of nil then nil 
+            [] H2|T2 then
+                if {IsAtom H2} then 
+                   {NoteToExtended H2} | {ChordToExtendedChordAux T2}
+                elseif {IsRecord H2} andthen ({Label H2} == note orelse {Label H2} == silence) then
+                   H2 | {ChordToExtendedChordAux T2}
+                elseif {Label H2} == '|' then
+                   {ChordToExtendedChordAux T2}
+                else 
+                    {NoteToExtended H2} | {ChordToExtendedChordAux T2}
+                end
             end
-      end
-   end
+        end
+    in
+        {ChordToExtendedChordAux H} | {ChordToExtendedChord T}
+    end
+ end
+ 
 
    fun {PartitionToTimedList Partition}
       case Partition of
@@ -60,22 +70,12 @@ define
       [] H|T then
             if {IsAtom H} then 
                {NoteToExtended H} | {PartitionToTimedList T}
-   
             elseif {IsRecord H} andthen {Label H} == note then 
                H | {PartitionToTimedList T}
-   
             elseif {IsRecord H} andthen {Label H} == silence then 
                H | {PartitionToTimedList T}
-   
             elseif {IsRecord H} andthen {Label H} == '|' then 
-                local ExtendedChord = {ChordToExtendedChord H}
-                in
-                    if ExtendedChord == nil then 
-                        {PartitionToTimedList T}
-                    else 
-                        [ExtendedChord] | {PartitionToTimedList T}
-                    end
-                end
+                {ChordToExtendedChord H} | {PartitionToTimedList T}
             else 
                 {NoteToExtended H} | {PartitionToTimedList T}
             end
