@@ -125,7 +125,10 @@ define
    end
 
    proc {TestEmptyChords P2T}
-     skip
+      P10 = [nil]  % Accord vide
+      E10 = [nil]
+   in
+      {AssertEquals {P2T P10} E10 "TestEmptyChords"}
    end
       
    proc {TestP2T P2T}
