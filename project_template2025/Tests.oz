@@ -96,8 +96,16 @@ define
    end
 
    proc {TestIdentity P2T}
-      % test that extended notes and chord go from input to output unchanged
-      skip
+      P3 = [
+         note(name:a octave:3 sharp:true duration:2.0 instrument:none)
+         silence(duration:0.5)
+         [
+            note(name:c octave:4 sharp:false duration:1.0 instrument:none)
+            note(name:e octave:4 sharp:false duration:1.0 instrument:none)
+         ]
+      ]
+   in
+      {AssertEquals {P2T P3} P3 "TestIdentity"}
    end
 
    proc {TestDuration P2T}

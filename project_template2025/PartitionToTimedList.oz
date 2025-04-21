@@ -8,7 +8,6 @@ export
    partitionToTimedList: PartitionToTimedList
 define
 
-   % Translate a note to the extended notation.
    fun {NoteToExtended Note}
       case Note
       of nil then nil 
@@ -28,58 +27,66 @@ define
                  duration:1.0
                  instrument:none)
          [] [N '#' O] then
-                    note(name:{StringToAtom [N]}
-                         octave:{StringToInt [O]}
-                         sharp:true
-                         duration:1.0
-                         instrument:none)
+            note(name:{StringToAtom [N]}
+                 octave:{StringToInt [O]}
+                 sharp:true
+                 duration:1.0
+                 instrument:none)
          end
       end
    end
-
-   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    fun {ChordToExtendedChord Chord}
     case Chord of
-       nil then nil 
+       nil then nil
     [] H|T then 
-        fun {ChordToExtendedChordAux H}
-            case H of nil then nil 
-            [] H2|T2 then
+       if {IsAtom H} then 
+          {NoteToExtended H} | {ChordToExtendedChord T}
+       elseif {IsRecord H} andthen ({Label H} == note orelse {Label H} == silence) then
+          H | {ChordToExtendedChord T}
+       else 
+          fun {ChordToExtendedChordAux H}
+             case H of 
+                nil then nil
+             [] H2|T2 then
                 if {IsAtom H2} then 
                    {NoteToExtended H2} | {ChordToExtendedChordAux T2}
                 elseif {IsRecord H2} andthen ({Label H2} == note orelse {Label H2} == silence) then
                    H2 | {ChordToExtendedChordAux T2}
                 elseif {Label H2} == '|' then
-                   {ChordToExtendedChordAux T2}
+                   {ChordToExtendedChordAux T2} 
                 else 
-                    {NoteToExtended H2} | {ChordToExtendedChordAux T2}
+                   {NoteToExtended H2} | {ChordToExtendedChordAux T2}
                 end
-            end
-        end
-    in
-        {ChordToExtendedChordAux H} | {ChordToExtendedChord T}
+             end
+          end
+          in
+          {ChordToExtendedChordAux H} | {ChordToExtendedChord T}
+       end
     end
  end
  
 
    fun {PartitionToTimedList Partition}
-      case Partition of
-         nil then
-            nil
-      [] H|T then
+        case Partition of nil then nil
+        [] H|T then
             if {IsAtom H} then 
-               {NoteToExtended H} | {PartitionToTimedList T}
+                {NoteToExtended H} | {PartitionToTimedList T}
             elseif {IsRecord H} andthen {Label H} == note then 
-               H | {PartitionToTimedList T}
+                H | {PartitionToTimedList T}
             elseif {IsRecord H} andthen {Label H} == silence then 
-               H | {PartitionToTimedList T}
+                H | {PartitionToTimedList T}
             elseif {IsRecord H} andthen {Label H} == '|' then 
-                {ChordToExtendedChord H} | {PartitionToTimedList T}
+                local Chord = {ChordToExtendedChord H} in
+                    if Chord == nil then 
+                        Chord
+                    else
+                        Chord | {PartitionToTimedList T}
+                    end
+                end
             else 
                 {NoteToExtended H} | {PartitionToTimedList T}
             end
-      end
-   end 
-
-end
+        end
+    end
+end 
