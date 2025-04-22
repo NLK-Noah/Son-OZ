@@ -37,8 +37,7 @@ define
    end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    fun {ChordToExtendedChord Chord}
-    case Chord of
-       nil then nil
+    case Chord of nil then nil
     [] H|T then 
        if {IsAtom H} then 
           {NoteToExtended H} | {ChordToExtendedChord T}
@@ -46,8 +45,7 @@ define
           H | {ChordToExtendedChord T}
        else 
           fun {ChordToExtendedChordAux H}
-             case H of 
-                nil then nil
+             case H of nil then nil
              [] H2|T2 then
                 if {IsAtom H2} then 
                    {NoteToExtended H2} | {ChordToExtendedChordAux T2}
@@ -78,8 +76,7 @@ define
                 H | {PartitionToTimedList T}
             elseif {IsRecord H} andthen {Label H} == '|' then 
                 local Chord = {ChordToExtendedChord H} in
-                    if Chord == nil then 
-                        Chord
+                    if Chord == nil then Chord
                     else
                         Chord | {PartitionToTimedList T}
                     end

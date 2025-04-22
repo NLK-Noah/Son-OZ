@@ -109,9 +109,16 @@ define
    end
 
    proc {TestDuration P2T}
-      skip
+      
+      P4 = [
+         note(name:c octave:4 sharp:false duration:2.0 instrument:none)
+         note(name:e octave:4 sharp:false duration:0.5 instrument:none)
+         silence(duration:1.5)
+      ]
+   in
+      {AssertEquals {P2T P4} P4 "TestDuration: simple durations"}
    end
-
+   
    proc {TestStretch P2T}
       skip
    end
