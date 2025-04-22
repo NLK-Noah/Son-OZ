@@ -64,6 +64,12 @@ define
                  sharp:false
                  duration:1.0
                  instrument: none)
+         [] [N '#' O] then
+                  note(name:{StringToAtom [N]}
+                       octave:{StringToInt [O]}
+                       sharp:true
+                       duration:1.0
+                       instrument:none)
          end
       end
    end
@@ -79,19 +85,18 @@ define
    end
 
    proc {TestChords P2T}
-      P = [[c4 e4 g4]]
-      E = [[
+      P2= [[c4 e4 g4]]
+      E2= [[
             note(name:c octave:4 sharp:false duration:1.0 instrument:none)
             note(name:e octave:4 sharp:false duration:1.0 instrument:none)
             note(name:g octave:4 sharp:false duration:1.0 instrument:none)
           ]]
    in
-      {AssertEquals {P2T P} E "TestChords"}
+      {AssertEquals {P2T [P2]} [E2] "TestChords: simple"}
    end
-   
 
    proc {TestIdentity P2T}
-      P = [
+      P3 = [
          note(name:a octave:3 sharp:true duration:2.0 instrument:none)
          silence(duration:0.5)
          [
@@ -100,13 +105,20 @@ define
          ]
       ]
    in
-      {AssertEquals {P2T P} P "TestIdentity"}
-   end
-   
-   proc {TestDuration P2T}
-      skip
+      {AssertEquals {P2T P3} P3 "TestIdentity"}
    end
 
+   proc {TestDuration P2T}
+      
+      P4 = [
+         note(name:c octave:4 sharp:false duration:2.0 instrument:none)
+         note(name:e octave:4 sharp:false duration:0.5 instrument:none)
+         silence(duration:1.5)
+      ]
+   in
+      {AssertEquals {P2T P4} P4 "TestDuration: simple durations"}
+   end
+   
    proc {TestStretch P2T}
       skip
    end
@@ -128,12 +140,11 @@ define
    end
 
    proc {TestEmptyChords P2T}
-      P = [nil]  % Accord vide
-      E = [nil]
+      P10 = [nil]  % Accord vide
+      E10 = [nil]
    in
-      {AssertEquals {P2T P} E "TestEmptyChords"}
+      {AssertEquals {P2T P10} E10 "TestEmptyChords"}
    end
-   
       
    proc {TestP2T P2T}
       {TestNotes P2T}
