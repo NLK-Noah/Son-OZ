@@ -63,6 +63,22 @@ define
        end
     end
  end
+
+   fun{StretchPartition Factor Partition}
+        {System.show Factor}
+        {System.show Partition}
+        case Partition of nil then nil 
+        [] H|T then 
+              if {IsAtom H} then 
+                note(name:H 
+                octave:4
+                sharp:false 
+                duration:Factor
+                instrument:none)
+                | {StretchPartition Factor T}
+            end
+        end
+   end  
  
 
    fun {PartitionToTimedList Partition}
@@ -70,9 +86,9 @@ define
         [] H|T then
             if {IsAtom H} then 
                 {NoteToExtended H} | {PartitionToTimedList T}
-            elseif {IsRecord H} andthen {Label H} == note then 
+            elseif {IsRecord H} andthen {Label H} == note then
                 H | {PartitionToTimedList T}
-            elseif {IsRecord H} andthen {Label H} == silence then 
+            elseif {IsRecord H} andthen {Label H} == silence then
                 H | {PartitionToTimedList T}
             elseif {IsRecord H} andthen {Label H} == '|' then 
                 local Chord = {ChordToExtendedChord H} in
@@ -81,6 +97,11 @@ define
                         Chord | {PartitionToTimedList T}
                     end
                 end
+            elseif {IsRecord H} andthen {Label H} == stretch then 
+                {System.show 'Stretch'}
+                {System.show H.factor}
+                {System.show H.partition}
+                {PartitionToTimedList {StretchPartition H.factor H.partition}}| {PartitionToTimedList T}
             else 
                 {NoteToExtended H} | {PartitionToTimedList T}
             end
