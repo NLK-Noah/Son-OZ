@@ -120,8 +120,14 @@ define
    end
    
    proc {TestStretch P2T}
-      skip
-   end
+      P = [stretch(factor:2.0 partition:[a b])]
+      E = [[
+         note(name:a octave:4 sharp:false duration:2.0 instrument:none)
+         note(name:b octave:4 sharp:false duration:2.0 instrument:none)
+      ]]
+   in
+      {AssertEquals {P2T P} E "TestStretch: notes séparées"}
+   end   
 
    proc {TestDrone P2T}
       skip
