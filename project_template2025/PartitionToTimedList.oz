@@ -111,6 +111,76 @@ define
    end
 end
 
+fun {ApplyTranspose Semitones Partition}
+   local
+      Flat = {PartitionToTimedList Partition}
+
+      Notes = [c#false c#true d#false d#true e#false
+               f#false f#true g#false g#true a#false a#true b#false]
+
+      fun {FindNoteIndex Name Sharp}
+         fun {Loop L I}
+            case L of nil then ~1
+            [] N#S|T then
+               if N == Name andthen S == Sharp then I
+               else {Loop T I+1}
+               end
+            end
+         end
+      in
+         {Loop Notes 0}
+      end
+
+      fun {IndexToNote I}
+         Index = I mod 12
+         OctShift = I div 12
+         N#S = {List.nth Notes Index}
+      in
+         N#S#OctShift
+      end
+   in
+      {Map Flat
+         fun {$ E}
+            if {Label E} == note then
+               OldIndex = {FindNoteIndex E.name E.sharp}
+               NewIndex = OldIndex + Semitones
+               N#S#Shift = {IndexToNote NewIndex}
+            in
+               note(name:N
+                    octave:E.octave + Shift
+                    sharp:S
+                    duration:E.duration
+                    instrument:E.instrument)
+
+            elseif {Label E} == silence then
+               E
+
+            elseif {IsList E} then
+               {Map E
+                  fun {$ N}
+                     if {Label N} == note then
+                        OldIndex = {FindNoteIndex N.name N.sharp}
+                        NewIndex = OldIndex + Semitones
+                        N2#S2#Shift2 = {IndexToNote NewIndex}
+                     in
+                        note(name:N2
+                             octave:N.octave + Shift2
+                             sharp:S2
+                             duration:N.duration
+                             instrument:N.instrument)
+                     else
+                        N
+                     end
+                  end}
+
+            else
+               E
+            end
+         end}
+   end
+end
+
+
 fun {ApplyStretch Factor Partition}
    local
       Flat = {PartitionToTimedList Partition}
@@ -183,6 +253,14 @@ end
                {ApplyStretch Factor Sub} | {PartitionToTimedList T}
             end
          
+         elseif {IsRecord H} andthen {Label H} == transpose then
+            local
+               N = H.semitones
+               Sub = H.partition
+            in
+               {ApplyTranspose N Sub} | {PartitionToTimedList T}
+            end 
+                    
          else 
             {NoteToExtended H} | {PartitionToTimedList T}
          end
