@@ -65,8 +65,6 @@ define
  end
 
    fun{StretchPartition Factor Partition}
-        {System.show Factor}
-        {System.show Partition}
         case Partition of nil then nil 
         [] H|T then 
               if {IsAtom H} then 
@@ -79,6 +77,32 @@ define
             end
         end
    end  
+
+   fun {Drone Partition Duration}
+    if Duration =< 0.0 then  nil
+    else
+       fun {DroneAux P}
+         case P of nil then nil 
+         [] H|T then 
+            if {IsAtom H} then 
+               {NoteToExtended H} | {DroneAux T}
+            elseif {IsRecord H} andthen {Label H} == note then
+               H | {DroneAux T}
+            elseif {IsRecord H} andthen {Label H} == silence then
+               H | {DroneAux T}
+            elseif {IsRecord H} andthen {Label H} == '|' then
+               {DroneAux T}
+            else
+               {NoteToExtended H} | {DroneAux T}
+            end
+         end
+       end
+    in
+       {DroneAux Partition} | {Drone Partition (Duration - 1.0)}
+    end
+ end
+ 
+ 
  
 
    fun {PartitionToTimedList Partition}
@@ -98,10 +122,9 @@ define
                     end
                 end
             elseif {IsRecord H} andthen {Label H} == stretch then 
-                {System.show 'Stretch'}
-                {System.show H.factor}
-                {System.show H.partition}
                 {PartitionToTimedList {StretchPartition H.factor H.partition}}| {PartitionToTimedList T}
+            elseif {IsRecord H} andthen {Label H} == drone then
+                {Drone H.partition H.duration}
             else 
                 {NoteToExtended H} | {PartitionToTimedList T}
             end

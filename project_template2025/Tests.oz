@@ -131,8 +131,19 @@ define
    
 
    proc {TestDrone P2T}
-      skip
+      P6 = [drone(partition: [c e g] duration: 2.0)]
+      E6= [
+         [note(name:c octave:4 sharp:false duration:1.0 instrument:none)
+          note(name:e octave:4 sharp:false duration:1.0 instrument:none)
+          note(name:g octave:4 sharp:false duration:1.0 instrument:none)]
+         [note(name:c octave:4 sharp:false duration:1.0 instrument:none)
+          note(name:e octave:4 sharp:false duration:1.0 instrument:none)
+          note(name:g octave:4 sharp:false duration:1.0 instrument:none)]
+      ]
+   in
+      {AssertEquals {P2T P6} E6 "TestDrone"}
    end
+   
 
    proc {TestMute P2T}
       skip
