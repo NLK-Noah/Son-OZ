@@ -85,12 +85,12 @@ define
    end
 
    proc {TestChords P2T}
-      P2= [[c4 e4 g4]]
-      E2= [[
+      P2 = [c4 d#2 g4]
+      E2 = [
             note(name:c octave:4 sharp:false duration:1.0 instrument:none)
-            note(name:e octave:4 sharp:false duration:1.0 instrument:none)
+            note(name:d octave:2 sharp:true duration:1.0 instrument:none)
             note(name:g octave:4 sharp:false duration:1.0 instrument:none)
-          ]]
+          ]
    in
       {AssertEquals {P2T [P2]} [E2] "TestChords: simple"}
    end
@@ -120,38 +120,39 @@ define
    end
    
    proc {TestStretch P2T}
-      P5 = [stretch(factor:2.0 partition:[a b])]
-      E5 = [[
+      P5 = [stretch(factor:2.0 partition:[a b silence])]
+      E5 = [
          note(name:a octave:4 sharp:false duration:2.0 instrument:none)
          note(name:b octave:4 sharp:false duration:2.0 instrument:none)
-      ]]
-   in
-      {AssertEquals {P2T P5} E5 "TestStretch: notes séparées"}
-   end
-   
-
-   proc {TestDrone P2T}
-      P6 = [drone(partition: [c e g] duration: 2.0)]
-      E6= [
-         [note(name:c octave:4 sharp:false duration:1.0 instrument:none)
-          note(name:e octave:4 sharp:false duration:1.0 instrument:none)
-          note(name:g octave:4 sharp:false duration:1.0 instrument:none)]
-         [note(name:c octave:4 sharp:false duration:1.0 instrument:none)
-          note(name:e octave:4 sharp:false duration:1.0 instrument:none)
-          note(name:g octave:4 sharp:false duration:1.0 instrument:none)]
+         silence(duration:2.0)
       ]
    in
-      {AssertEquals {P2T P6} E6 "TestDrone"}
+      {AssertEquals {P2T P5} E5 "TestStretch: notes + silence étirés"}
+   end    
+
+   proc {TestDrone P2T}
+      P6 = [drone(note:[a] amount:3)]
+      E6 = [
+         note(name:a octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:a octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:a octave:4 sharp:false duration:1.0 instrument:none)
+      ]
+   in
+      {AssertEquals {P2T P6} E6 "TestDrone: note répétée 3 fois"}
    end
-   
+
 
    proc {TestMute P2T}
-      P7 = [mute(partition:[a b] duration:2.0)]
-      E7 = [silence(duration:2.0) silence(duration:2.0)]
+      P7 = [mute(amount:3)]
+      E7 = [
+         silence(duration:1.0)
+         silence(duration:1.0)
+         silence(duration:1.0)
+      ]
    in
-      {AssertEquals {P2T P7} E7 "TestMute"}
+      {AssertEquals {P2T P7} E7 "TestMute: silence répété 3 fois"}
    end
-   
+
 
    proc {TestTranspose P2T}
       skip
