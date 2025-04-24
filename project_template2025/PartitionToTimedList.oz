@@ -78,7 +78,7 @@ define
         end
    end  
 
-   fun {Drone Partition Duration}
+   fun {Drone Partition Duration} % a améliorer
     if Duration =< 0.0 then  nil
     else
        fun {DroneAux P}
@@ -101,7 +101,17 @@ define
        {DroneAux Partition} | {Drone Partition (Duration - 1.0)}
     end
  end
- 
+
+  fun{Silence Partition Duration} % a améliorer
+      case Partition of nil then nil 
+      [] H|T then 
+         if {IsAtom H} then 
+            silence(duration:Duration) | {Silence T Duration}
+         else 
+            {NoteToExtended H} | {Silence T Duration}
+         end 
+      end 
+  end 
  
  
 
@@ -125,6 +135,8 @@ define
                 {PartitionToTimedList {StretchPartition H.factor H.partition}}| {PartitionToTimedList T}
             elseif {IsRecord H} andthen {Label H} == drone then
                 {Drone H.partition H.duration}
+            elseif {IsRecord H} andthen {Label H} == mute then
+               {Silence H.partition H.duration} 
             else 
                 {NoteToExtended H} | {PartitionToTimedList T}
             end

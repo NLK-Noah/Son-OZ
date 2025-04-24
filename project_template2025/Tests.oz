@@ -146,8 +146,12 @@ define
    
 
    proc {TestMute P2T}
-      skip
+      P7 = [mute(partition:[a b] duration:2.0)]
+      E7 = [silence(duration:2.0) silence(duration:2.0)]
+   in
+      {AssertEquals {P2T P7} E7 "TestMute"}
    end
+   
 
    proc {TestTranspose P2T}
       skip
