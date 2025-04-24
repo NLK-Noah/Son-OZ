@@ -64,207 +64,82 @@ define
     end
  end
 
+   fun{StretchPartition Factor Partition}
+        case Partition of nil then nil 
+        [] H|T then 
+              if {IsAtom H} then 
+                note(name:H 
+                octave:4
+                sharp:false 
+                duration:Factor
+                instrument:none)
+                | {StretchPartition Factor T}
+            end
+        end
+   end  
 
-   fun {ApplyDuration Seconds Partition}
-   local
-      Flat = {PartitionToTimedList Partition}
-      TotalDuration = {FoldL Flat
-         fun {$ Sum E}
-            if {Label E} == note orelse {Label E} == silence then
-               Sum + E.duration
-            elseif {IsList E} andthen E \= nil then
-               Sum + E.1.duration
+   fun {Drone Partition Duration} % a améliorer
+    if Duration =< 0.0 then  nil
+    else
+       fun {DroneAux P}
+         case P of nil then nil 
+         [] H|T then 
+            if {IsAtom H} then 
+               {NoteToExtended H} | {DroneAux T}
+            elseif {IsRecord H} andthen {Label H} == note then
+               H | {DroneAux T}
+            elseif {IsRecord H} andthen {Label H} == silence then
+               H | {DroneAux T}
+            elseif {IsRecord H} andthen {Label H} == '|' then
+               {DroneAux T}
             else
-               Sum
+               {NoteToExtended H} | {DroneAux T}
             end
          end
-         0.0}
-      StretchFactor = Seconds / TotalDuration
-   in
-      {Map Flat
-         fun {$ E}
-            if {Label E} == note then
-               note(name:E.name
-                    octave:E.octave
-                    sharp:E.sharp
-                    duration:E.duration * StretchFactor
-                    instrument:E.instrument)
-            elseif {Label E} == silence then
-               silence(duration: E.duration * StretchFactor)
-            elseif {IsList E} then
-               {Map E
-                  fun {$ N}
-                     if {Label N} == note then
-                        note(name:N.name
-                             octave:N.octave
-                             sharp:N.sharp
-                             duration:N.duration * StretchFactor
-                             instrument:N.instrument)
-                     else
-                        N
-                     end
-                  end}
-            else
-               E
-            end
-         end}
-   end
-end
+       end
+    in
+       {DroneAux Partition} | {Drone Partition (Duration - 1.0)}
+    end
+ end
 
-fun {ApplyTranspose Semitones Partition}
-   local
-      Flat = {PartitionToTimedList Partition}
-
-      Notes = [c#false c#true d#false d#true e#false
-               f#false f#true g#false g#true a#false a#true b#false]
-
-      fun {FindNoteIndex Name Sharp}
-         fun {Loop L I}
-            case L of nil then ~1
-            [] N#S|T then
-               if N == Name andthen S == Sharp then I
-               else {Loop T I+1}
-               end
-            end
-         end
-      in
-         {Loop Notes 0}
-      end
-
-      fun {IndexToNote I}
-         Index = I mod 12
-         OctShift = I div 12
-         N#S = {List.nth Notes Index}
-      in
-         N#S#OctShift
-      end
-   in
-      {Map Flat
-         fun {$ E}
-            if {Label E} == note then
-               OldIndex = {FindNoteIndex E.name E.sharp}
-               NewIndex = OldIndex + Semitones
-               N#S#Shift = {IndexToNote NewIndex}
-            in
-               note(name:N
-                    octave:E.octave + Shift
-                    sharp:S
-                    duration:E.duration
-                    instrument:E.instrument)
-
-            elseif {Label E} == silence then
-               E
-
-            elseif {IsList E} then
-               {Map E
-                  fun {$ N}
-                     if {Label N} == note then
-                        OldIndex = {FindNoteIndex N.name N.sharp}
-                        NewIndex = OldIndex + Semitones
-                        N2#S2#Shift2 = {IndexToNote NewIndex}
-                     in
-                        note(name:N2
-                             octave:N.octave + Shift2
-                             sharp:S2
-                             duration:N.duration
-                             instrument:N.instrument)
-                     else
-                        N
-                     end
-                  end}
-
-            else
-               E
-            end
-         end}
-   end
-end
-
-
-fun {ApplyStretch Factor Partition}
-   local
-      Flat = {PartitionToTimedList Partition}
-   in
-      {Map Flat
-         fun {$ E}
-            if {Label E} == note then
-               note(name:E.name
-                    octave:E.octave
-                    sharp:E.sharp
-                    duration:E.duration * Factor
-                    instrument:E.instrument)
-            elseif {Label E} == silence then
-               silence(duration: E.duration * Factor)
-            elseif {IsList E} then
-               {Map E
-                  fun {$ N}
-                     if {Label N} == note then
-                        note(name:N.name
-                             octave:N.octave
-                             sharp:N.sharp
-                             duration:N.duration * Factor
-                             instrument:N.instrument)
-                     else
-                        N
-                     end
-                  end}
-            else
-               E
-            end
-         end}
-   end
-end
-
-
+  fun{Silence Partition Duration} % a améliorer
+      case Partition of nil then nil 
+      [] H|T then 
+         if {IsAtom H} then 
+            silence(duration:Duration) | {Silence T Duration}
+         else 
+            {NoteToExtended H} | {Silence T Duration}
+         end 
+      end 
+  end 
+ 
  
 
    fun {PartitionToTimedList Partition}
-      case Partition of nil then nil
-      [] H|T then
-         if {IsAtom H} then 
-            {NoteToExtended H} | {PartitionToTimedList T}
-            
-         elseif {IsRecord H} andthen {Label H} == note then 
-            H | {PartitionToTimedList T}
-            
-         elseif {IsRecord H} andthen {Label H} == silence then 
-            H | {PartitionToTimedList T}
-            
-         elseif {IsRecord H} andthen {Label H} == '|' then 
-            local Chord = {ChordToExtendedChord H} in
-               if Chord == nil then Chord
-               else Chord | {PartitionToTimedList T}
-               end
+        case Partition of nil then nil
+        [] H|T then
+            if {IsAtom H} then 
+                {NoteToExtended H} | {PartitionToTimedList T}
+            elseif {IsRecord H} andthen {Label H} == note then
+                H | {PartitionToTimedList T}
+            elseif {IsRecord H} andthen {Label H} == silence then
+                H | {PartitionToTimedList T}
+            elseif {IsRecord H} andthen {Label H} == '|' then 
+                local Chord = {ChordToExtendedChord H} in
+                    if Chord == nil then Chord
+                    else
+                        Chord | {PartitionToTimedList T}
+                    end
+                end
+            elseif {IsRecord H} andthen {Label H} == stretch then 
+                {PartitionToTimedList {StretchPartition H.factor H.partition}}| {PartitionToTimedList T}
+            elseif {IsRecord H} andthen {Label H} == drone then
+                {Drone H.partition H.duration}
+            elseif {IsRecord H} andthen {Label H} == mute then
+               {Silence H.partition H.duration} 
+            else 
+                {NoteToExtended H} | {PartitionToTimedList T}
             end
-            
-         elseif {IsRecord H} andthen {Label H} == duration then 
-            local 
-               Seconds = H.seconds
-               Sub = H.2
-            in
-               {ApplyDuration Seconds Sub} | {PartitionToTimedList T}
-            end
-
-         elseif {IsRecord H} andthen {Label H} == stretch then 
-            local 
-               Factor = H.factor
-               Sub = H.partition
-            in
-               {ApplyStretch Factor Sub} | {PartitionToTimedList T}
-            end
-         
-         elseif {IsRecord H} andthen {Label H} == transpose then
-            local
-               N = H.semitones
-               Sub = H.partition
-            in
-               {ApplyTranspose N Sub} | {PartitionToTimedList T}
-            end 
-                    
-         else 
-            {NoteToExtended H} | {PartitionToTimedList T}
-         end
-      end
-   end
-
+        end
+    end
 end 

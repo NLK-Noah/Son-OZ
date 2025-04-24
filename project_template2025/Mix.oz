@@ -12,7 +12,6 @@
     CWD = {Atom.toString {OS.getCWD}}#"/"
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
     fun {Mix P2T Music}
       case Music of nil then nil
       [] samples(S) | _ then S
@@ -20,6 +19,4 @@
          {Project2025.readFile CWD#'wave/animals/cow.wav'}
       end
    end
-   
-
 end

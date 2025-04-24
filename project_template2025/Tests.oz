@@ -120,28 +120,41 @@ define
    end
    
    proc {TestStretch P2T}
-      P = [stretch(factor:2.0 partition:[a b])]
-      E = [[
+      P5 = [stretch(factor:2.0 partition:[a b])]
+      E5 = [[
          note(name:a octave:4 sharp:false duration:2.0 instrument:none)
          note(name:b octave:4 sharp:false duration:2.0 instrument:none)
       ]]
    in
-      {AssertEquals {P2T P} E "TestStretch: notes séparées"}
-   end   
+      {AssertEquals {P2T P5} E5 "TestStretch: notes séparées"}
+   end
+   
 
    proc {TestDrone P2T}
-      skip
+      P6 = [drone(partition: [c e g] duration: 2.0)]
+      E6= [
+         [note(name:c octave:4 sharp:false duration:1.0 instrument:none)
+          note(name:e octave:4 sharp:false duration:1.0 instrument:none)
+          note(name:g octave:4 sharp:false duration:1.0 instrument:none)]
+         [note(name:c octave:4 sharp:false duration:1.0 instrument:none)
+          note(name:e octave:4 sharp:false duration:1.0 instrument:none)
+          note(name:g octave:4 sharp:false duration:1.0 instrument:none)]
+      ]
+   in
+      {AssertEquals {P2T P6} E6 "TestDrone"}
    end
+   
 
    proc {TestMute P2T}
-      skip
+      P7 = [mute(partition:[a b] duration:2.0)]
+      E7 = [silence(duration:2.0) silence(duration:2.0)]
+   in
+      {AssertEquals {P2T P7} E7 "TestMute"}
    end
+   
 
    proc {TestTranspose P2T}
-      P = [transpose(semitones:2 partition:[a])]
-      E = [[note(name:a octave:4 sharp:true duration:1.0 instrument:none)]]
-   in
-      {AssertEquals {P2T P} E "TestTranspose: a + 2 → b"}
+      skip
    end
 
    proc {TestP2TChaining P2T}
@@ -170,7 +183,7 @@ define
    end
 
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-   % TEST Mix
+    TEST Mix
 
    proc {TestSamples P2T Mix}
       E1 = [0.1 ~0.2 0.3]
