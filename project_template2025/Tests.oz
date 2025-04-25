@@ -474,11 +474,25 @@ define
    end
    
    proc {TestPartition P2T Mix}
-      skip
-   end
+      P = [a b]
+      M = [partition(P)]
+      E = [
+         note(name:a octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:b octave:4 sharp:false duration:1.0 instrument:none)
+      ]
+   in
+      {AssertEquals {Mix P2T M} E "TestPartition: simple partition"}
+   end   
    
    proc {TestWave P2T Mix}
-      skip
+      W1 = wave(filename:"wave/animals/cow.wav")
+      W2 = wave(filename:"wave/animals/duck_quack.wav")
+      E1 = {Project2025.readFile "wave/animals/cow.wav"}
+      E2 = {Project2025.readFile "wave/animals/duck_quack.wav"}
+   in
+      {AssertEquals {Mix P2T [samples(E1)]} E1 "TestWave: direct samples"}
+      {AssertEquals {Mix P2T [W1]} E1 "TestWave: wave cow"}
+      {AssertEquals {Mix P2T [W2]} E2 "TestWave: wave duck quack"}
    end
 
    proc {TestMerge P2T Mix}
