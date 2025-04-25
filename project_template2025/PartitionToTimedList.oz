@@ -59,6 +59,39 @@ define
         end
     end
 
+    fun {Duration TotalSeconds Partition}
+        Flattened = {PartitionToTimedList Partition}
+        fun {TotalDuree L}
+           case L
+           of nil then 0.0
+           [] H|T then
+              case H
+              of note(duration:D ...) then (D + {TotalDuree T})
+              [] silence(duration:D) then (D + {TotalDuree T})
+              [] _ then {TotalDuree T}
+              end
+           end
+        end
+        Prev = {TotalDuree Flattened}
+        Factor = if Prev == 0.0 then 1.0 else (TotalSeconds / Prev) end
+        
+        fun {Scale L}
+           case L
+           of nil then nil
+           [] H|T then
+              case H
+              of note(name:N octave:O sharp:S duration:D instrument:I) then
+                 note(name:N octave:O sharp:S duration:(D * Factor) instrument:I) | {Scale T}
+              [] silence(duration:D) then
+                 silence(duration:(D * Factor)) | {Scale T}
+              [] _ then H | {Scale T}
+              end
+           end
+        end
+     in
+        {Scale Flattened}
+     end
+    
     fun {Stretch Factor Partition}
         case Partition
         of nil then nil
@@ -116,7 +149,9 @@ define
                     end
                 end
             elseif {IsRecord H} andthen {Label H} == stretch then 
-                {Append {PartitionToTimedList {Stretch H.factor H.partition}} {PartitionToTimedList T}}            
+                {Append {PartitionToTimedList {Stretch H.factor H.partition}} {PartitionToTimedList T}}
+            elseif {IsRecord H} andthen {Label H} == duration then 
+                {Append {Duration H.seconds H.partition} {PartitionToTimedList T}}                         
             elseif {IsRecord H} andthen {Label H} == drone then 
                 {Append {Drone H.note H.amount} {PartitionToTimedList T}}             
             elseif {IsRecord H} andthen {Label H} == mute then 

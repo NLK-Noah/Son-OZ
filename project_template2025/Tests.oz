@@ -176,27 +176,64 @@ define
    end   
    
    proc {TestDuration P2T}
-      
-      P4 = [
-         note(name:c octave:4 sharp:false duration:2.0 instrument:none)
-         note(name:e octave:4 sharp:false duration:0.5 instrument:none)
-         silence(duration:1.5)
+      P = [duration(seconds:2.0 partition:[a b])]
+      E = [
+         note(name:a octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:b octave:4 sharp:false duration:1.0 instrument:none)
       ]
    in
-      {AssertEquals {P2T P4} P4 "TestDuration: simple durations"}
+      {AssertEquals {P2T P} E "TestDuration: simple case"}
    end
 
-   proc {TestDuration_LongNote P2T}
-      P = [note(name:g octave:3 sharp:false duration:5.0 instrument:none)]
+   proc {TestDurationSilence P2T}
+      P = [duration(seconds:3.0 partition:[a silence b])]
+      E = [
+         note(name:a octave:4 sharp:false duration:1.0 instrument:none)
+         silence(duration:1.0)
+         note(name:b octave:4 sharp:false duration:1.0 instrument:none)
+      ]
    in
-      {AssertEquals {P2T P} P "TestDuration: long note"}
+      {AssertEquals {P2T P} E "TestDuration: with silence"}
    end
 
-   proc {TestDuration_SilenceDifferentDuration P2T}
-      P = [silence(duration:0.25)]
-      E = [silence(duration:0.25)]
+   proc {TestDurationAdd P2T}
+      P = [duration(seconds:4.0 partition:[a b])]
+      E = [
+         note(name:a octave:4 sharp:false duration:2.0 instrument:none)
+         note(name:b octave:4 sharp:false duration:2.0 instrument:none)
+      ]
    in
-      {AssertEquals {P2T P} E "TestDuration: silence with custom duration"}
+      {AssertEquals {P2T P} E "TestDuration: up to 4.0s"}
+   end
+   
+   proc {TestDurationSub P2T}
+      P = [duration(seconds:1.0 partition:[a b])]
+      E = [
+         note(name:a octave:4 sharp:false duration:0.5 instrument:none)
+         note(name:b octave:4 sharp:false duration:0.5 instrument:none)
+      ]
+   in
+      {AssertEquals {P2T P} E "TestDuration: down to 1.0s"}
+   end
+
+   proc {TestDurationExact P2T}
+      P = [duration(seconds:2.0 partition:[
+         note(name:c octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:d octave:4 sharp:false duration:1.0 instrument:none)
+      ])]
+      E = [
+         note(name:c octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:d octave:4 sharp:false duration:1.0 instrument:none)
+      ]
+   in
+      {AssertEquals {P2T P} E "TestDuration: already matching total duration"}
+   end
+
+   proc {TestDurationEmpty P2T}
+      P = [duration(seconds:3.0 partition:nil)]
+      E = nil
+   in
+      {AssertEquals {P2T P} E "TestDuration: empty partition returns nil"}
    end
    
    proc {TestStretch P2T}
@@ -345,8 +382,11 @@ define
       {TestIdentity_Silence_Note P2T}
       {TestIdentity_Mixed P2T}
       {TestDuration P2T}
-      {TestDuration_LongNote P2T}
-      {TestDuration_SilenceDifferentDuration P2T}
+      {TestDurationSilence P2T}
+      {TestDurationAdd P2T}
+      {TestDurationSub P2T}
+      {TestDurationExact P2T}
+      {TestDurationEmpty P2T}
       {TestStretch P2T}
       {TestStretch_Silence P2T}
       {TestStretch_EmptyPartition P2T}
