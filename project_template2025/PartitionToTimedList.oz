@@ -80,11 +80,16 @@ define
     end       
 
     fun {Drone NoteOrChord Amount}
-        if Amount =< 0 then nil
+        if Amount =< 0 then 
+           nil
+        elseif {IsList NoteOrChord} andthen {IsList {List.nth NoteOrChord 1}} then
+           % Cas: c’est une liste de listes => accord (chord)
+           {ChordToExtendedChord {List.nth NoteOrChord 1}} | {Drone NoteOrChord (Amount - 1)}
         else
+           % Cas: c’est une liste de notes => notes simples
            {Append {Map NoteOrChord NoteToExtended} {Drone NoteOrChord (Amount - 1)}}
         end
-     end 
+    end 
 
      fun {Mute Amount}
         if Amount =< 0 then nil

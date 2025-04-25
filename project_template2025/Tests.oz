@@ -231,18 +231,18 @@ define
       {AssertEquals {P2T P} E "TestStretch: single note stretched"}
    end   
 
-   proc {TestDrone P2T}
-      P6 = [drone(note:[a] amount:3)]
-      E6 = [
-         note(name:a octave:4 sharp:false duration:1.0 instrument:none)
-         note(name:a octave:4 sharp:false duration:1.0 instrument:none)
-         note(name:a octave:4 sharp:false duration:1.0 instrument:none)
-      ]
+   proc {TestDrone_SingleNote P2T}
+   P = [drone(note:[a] amount:3)]
+   E = [
+      note(name:a octave:4 sharp:false duration:1.0 instrument:none)
+      note(name:a octave:4 sharp:false duration:1.0 instrument:none)
+      note(name:a octave:4 sharp:false duration:1.0 instrument:none)
+   ]
    in
-      {AssertEquals {P2T P6} E6 "TestDrone: note répétée 3 fois"}
+      {AssertEquals {P2T P} E "TestDrone: single note repeated 3 times"}
    end
 
-   proc {TestDrone_Chord P2T}
+   proc {TestDrone_NoteList P2T}
       P = [drone(note:[c e] amount:2)]
       E = [
          note(name:c octave:4 sharp:false duration:1.0 instrument:none)
@@ -251,20 +251,21 @@ define
          note(name:e octave:4 sharp:false duration:1.0 instrument:none)
       ]
    in
-      {AssertEquals {P2T P} E "TestDrone: simple chord drone 2 times"}
+      {AssertEquals {P2T P} E "TestDrone: note list repeated"}
    end
-   
-   proc {TestDrone_Silence P2T}
-      P = [drone(note:[silence] amount:2)]
+
+   proc {TestDrone_Chord P2T}
+      P = [drone(note:[[c e]] amount:2)]
       E = [
-         silence(duration:1.0)
-         silence(duration:1.0)
+         [note(name:c octave:4 sharp:false duration:1.0 instrument:none)
+          note(name:e octave:4 sharp:false duration:1.0 instrument:none)]
+         [note(name:c octave:4 sharp:false duration:1.0 instrument:none)
+          note(name:e octave:4 sharp:false duration:1.0 instrument:none)]
       ]
    in
-      {AssertEquals {P2T P} E "TestDrone: silence repeated"}
+      {AssertEquals {P2T P} E "TestDrone: chord repeated 2 times"}
    end
    
-
    proc {TestMute P2T}
       P7 = [mute(amount:3)]
       E7 = [
@@ -350,9 +351,9 @@ define
       {TestStretch_Silence P2T}
       {TestStretch_EmptyPartition P2T}
       {TestStretch_SingleNote P2T}
-      {TestDrone P2T}
+      {TestDrone_SingleNote P2T}
+      {TestDrone_NoteList P2T}
       {TestDrone_Chord P2T}
-      {TestDrone_Silence P2T}
       {TestMute P2T}
       {TestMute_Single P2T}
       {TestMute_Zero P2T}
