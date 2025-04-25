@@ -131,6 +131,100 @@ define
         end
      end
      
+
+     fun {NoteToIndex Name Sharp}
+        case Name#Sharp
+        of c#false then 0
+        [] c#true  then 1
+        [] d#false then 2
+        [] d#true  then 3
+        [] e#false then 4
+        [] f#false then 5
+        [] f#true  then 6
+        [] g#false then 7
+        [] g#true  then 8
+        [] a#false then 9
+        [] a#true  then 10
+        [] b#false then 11
+        else raise error(invalidNote(Name#Sharp)) end
+        end
+     end
+     
+     fun {IndexToNote Index}
+        case (Index mod 12 + 12) mod 12
+        of 0 then c#false
+        [] 1 then c#true
+        [] 2 then d#false
+        [] 3 then d#true
+        [] 4 then e#false
+        [] 5 then f#false
+        [] 6 then f#true
+        [] 7 then g#false
+        [] 8 then g#true
+        [] 9 then a#false
+        [] 10 then a#true
+        [] 11 then b#false
+        end
+     end
+     
+     fun {TransposeNote Note Semitones}
+        StartID = {NoteToIndex Note.name Note.sharp}
+        NewID = StartID + Semitones
+     
+        CorrectedID = (NewID + 12) mod 12   % On ajoute 12 pour éviter négatif
+        OctaveChange = (NewID div 12)
+     
+        % Cas spécial : si NewID < 0 et NewID mod 12 ≠ 0, il faut corriger encore l'octave
+        NewOctave = if NewID < 0 andthen NewID mod 12 \= 0 then Note.octave + OctaveChange - 1
+           else Note.octave + OctaveChange end
+     
+        NewName#NewSharp = {IndexToNote CorrectedID}
+     in
+        note(name:NewName octave:NewOctave sharp:NewSharp duration:Note.duration instrument:Note.instrument)
+     end
+        
+     
+     
+     fun {Transpose Semitones Partition}
+        case Partition
+        of nil then nil
+        [] H|T then
+           if {IsList H} then
+              % Cas où H est un accord (liste de notes)
+              local
+                 Extended = {Map H NoteToExtended}
+                 Transposed = {Map Extended fun {$ N}
+                    case N
+                    of note(...) then
+                       {TransposeNote N Semitones}
+                    [] silence(duration:_) then
+                       N
+                    else
+                       raise error(invalidElementInTranspose(N)) end
+                    end
+                 end}
+              in
+                 Transposed | {Transpose Semitones T}
+              end
+           else
+              local
+                 Extended = {NoteToExtended H}
+              in
+                 case Extended
+                 of note(...) then
+                    {TransposeNote Extended Semitones} | {Transpose Semitones T}
+                 [] silence(duration:_) then
+                    Extended | {Transpose Semitones T}
+                 else
+                    raise error(invalidElementInTranspose(Extended)) end
+                 end
+              end
+           end
+        end
+     end
+     
+     
+     
      
    fun {PartitionToTimedList Partition}
         case Partition of nil then nil
@@ -155,7 +249,9 @@ define
             elseif {IsRecord H} andthen {Label H} == drone then 
                 {Append {Drone H.note H.amount} {PartitionToTimedList T}}             
             elseif {IsRecord H} andthen {Label H} == mute then 
-                {Append {Mute H.amount} {PartitionToTimedList T}}             
+                {Append {Mute H.amount} {PartitionToTimedList T}}    
+            elseif {IsRecord H} andthen {Label H} == transpose then
+                {Append {PartitionToTimedList {Transpose H.semitones H.partition}} {PartitionToTimedList T}}                      
             else 
                 {NoteToExtended H} | {PartitionToTimedList T}
             end

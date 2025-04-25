@@ -328,8 +328,62 @@ define
       {AssertEquals {P2T P} E "TestMute: zero silence"}
    end   
 
-   proc {TestTranspose P2T}
-      skip
+   proc {TestTranspose_SimpleNote P2T}
+      P = [transpose(semitones:1 partition:[c])]
+      E = [
+         note(name:c sharp:true octave:4 duration:1.0 instrument:none)
+      ]
+   in
+      {AssertEquals {P2T P} E "TestTranspose: simple note up by 1 semitone"}
+   end
+
+   proc {TestTranspose_SimpleNoteDown P2T}
+      P = [transpose(semitones:~1 partition:[c])]
+      E = [
+         note(name:b octave:3 sharp:false duration:1.0 instrument:none)
+      ]
+   in
+      {AssertEquals {P2T P} E "TestTranspose: simple note down by 1 semitone"}
+   end
+
+   proc {TestTranspose_SeveralNotes P2T}
+      P = [transpose(semitones:2 partition:[c d e])]
+      E = [
+         note(name:d octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:e octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:f sharp:true octave:4 duration:1.0 instrument:none)
+      ]
+   in
+      {AssertEquals {P2T P} E "TestTranspose: several notes up by 2 semitones"}
+   end
+
+   proc {TestTranspose_NegativeOverBoundary P2T}
+      P = [transpose(semitones:~3 partition:[c])]
+      E = [
+         note(name:a octave:3 sharp:false duration:1.0 instrument:none)
+      ]
+   in
+      {AssertEquals {P2T P} E "TestTranspose: note down crossing octave boundary"}
+   end
+
+   proc {TestTranspose_WithChord P2T}
+      P = [transpose(semitones:1 partition:[[c e g]])]
+      E = [
+         [
+            note(name:c sharp:true octave:4 duration:1.0 instrument:none)
+            note(name:f octave:4 sharp:false duration:1.0 instrument:none)
+            note(name:g sharp:true octave:4 duration:1.0 instrument:none)
+         ]
+      ]
+   in
+      {AssertEquals {P2T P} E "TestTranspose: chord up by 1 semitone"}
+   end
+
+   proc {TestTranspose_Empty P2T}
+      P = [transpose(semitones:4 partition:nil)]
+      E = nil
+   in
+      {AssertEquals {P2T P} E "TestTranspose: empty partition"}
    end
 
    proc {TestP2TChaining P2T}
@@ -397,7 +451,12 @@ define
       {TestMute P2T}
       {TestMute_Single P2T}
       {TestMute_Zero P2T}
-      {TestTranspose P2T}
+      {TestTranspose_SimpleNote P2T}
+      {TestTranspose_SimpleNoteDown P2T}
+      {TestTranspose_SeveralNotes P2T}
+      {TestTranspose_NegativeOverBoundary P2T}
+      {TestTranspose_WithChord P2T}
+      {TestTranspose_Empty P2T}
       {TestP2TChaining P2T}
       {TestEmptyChords P2T}  
       {TestEmptyChords_NestedNil P2T} 
