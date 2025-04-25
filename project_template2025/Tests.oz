@@ -84,6 +84,27 @@ define
       {AssertEquals {P2T P1} E1 "TestNotes"}
    end
 
+   proc {TestNotes_Sharp P2T}
+      P = [g#3]
+      E = [note(name:g octave:3 sharp:true duration:1.0 instrument:none)]
+   in
+      {AssertEquals {P2T P} E "TestNotes: sharp note"}
+   end
+   
+   proc {TestNotes_SimpleAtom P2T}
+      P = [e]
+      E = [note(name:e octave:4 sharp:false duration:1.0 instrument:none)]
+   in
+      {AssertEquals {P2T P} E "TestNotes: simple atom"}
+   end
+   
+   proc {TestNotes_SilenceAtom P2T}
+      P = [silence]
+      E = [silence(duration:1.0)]
+   in
+      {AssertEquals {P2T P} E "TestNotes: silence atom"}
+   end   
+
    proc {TestChords P2T}
       P2 = [c4 d#2 g4]
       E2 = [
@@ -93,6 +114,17 @@ define
           ]
    in
       {AssertEquals {P2T [P2]} [E2] "TestChords: simple"}
+   end
+
+   proc {TestChords_Random P2T}
+      P = [c#4 d e#5]
+      E = [
+         note(name:c octave:4 sharp:true duration:1.0 instrument:none)
+         note(name:d octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:e octave:5 sharp:true duration:1.0 instrument:none)
+      ]
+   in
+      {AssertEquals {P2T [P]} [E] "TestChords: random sharp and natural"}
    end
 
    proc {TestIdentity P2T}
@@ -108,6 +140,15 @@ define
       {AssertEquals {P2T P3} P3 "TestIdentity"}
    end
 
+   proc {TestIdentity_Silence_Note P2T}
+      P = [
+         silence(duration:0.25)
+         note(name:b octave:2 sharp:true duration:0.75 instrument:none)
+      ]
+   in
+      {AssertEquals {P2T P} P "TestIdentity: silence first"}
+   end
+   
    proc {TestDuration P2T}
       
       P4 = [
@@ -117,6 +158,12 @@ define
       ]
    in
       {AssertEquals {P2T P4} P4 "TestDuration: simple durations"}
+   end
+
+   proc {TestDuration_LongNote P2T}
+      P = [note(name:g octave:3 sharp:false duration:5.0 instrument:none)]
+   in
+      {AssertEquals {P2T P} P "TestDuration: long note"}
    end
    
    proc {TestStretch P2T}
@@ -128,7 +175,15 @@ define
       ]
    in
       {AssertEquals {P2T P5} E5 "TestStretch: notes + silence étirés"}
-   end    
+   end 
+   
+   proc {TestStretch_Silence P2T}
+      P = [stretch(factor:3.0 partition:[silence])]
+      E = [silence(duration:3.0)]
+   in
+      {AssertEquals {P2T P} E "TestStretch: silence stretched"}
+   end
+   
 
    proc {TestDrone P2T}
       P6 = [drone(note:[a] amount:3)]
@@ -141,6 +196,17 @@ define
       {AssertEquals {P2T P6} E6 "TestDrone: note répétée 3 fois"}
    end
 
+   proc {TestDrone_Chord P2T}
+      P = [drone(note:[c e] amount:2)]
+      E = [
+         note(name:c octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:e octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:c octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:e octave:4 sharp:false duration:1.0 instrument:none)
+      ]
+   in
+      {AssertEquals {P2T P} E "TestDrone: simple chord drone 2 times"}
+   end   
 
    proc {TestMute P2T}
       P7 = [mute(amount:3)]
@@ -153,14 +219,46 @@ define
       {AssertEquals {P2T P7} E7 "TestMute: silence répété 3 fois"}
    end
 
+   proc {TestMute_Single P2T}
+      P = [mute(amount:1)]
+      E = [silence(duration:1.0)]
+   in
+      {AssertEquals {P2T P} E "TestMute: single silence"}
+   end
+
+   proc {TestMute_Zero P2T}
+      P = [mute(amount:0)]
+      E = nil
+   in
+      {AssertEquals {P2T P} E "TestMute: zero silence"}
+   end   
 
    proc {TestTranspose P2T}
       skip
    end
 
    proc {TestP2TChaining P2T}
-      skip
-   end
+      P = [
+         a
+         [b c]
+         stretch(factor:2.0 partition:[d])
+         drone(note:[e] amount:2)
+         mute(amount:1)
+      ]
+      E = {Append
+            [note(name:a octave:4 sharp:false duration:1.0 instrument:none)]
+            {Append
+               [[note(name:b octave:4 sharp:false duration:1.0 instrument:none)
+                 note(name:c octave:4 sharp:false duration:1.0 instrument:none)]]
+               {Append
+                  [note(name:d octave:4 sharp:false duration:2.0 instrument:none)]
+                  {Append
+                     [note(name:e octave:4 sharp:false duration:1.0 instrument:none)
+                      note(name:e octave:4 sharp:false duration:1.0 instrument:none)]
+                     [silence(duration:1.0)]}}}}
+   in
+      {AssertEquals {P2T P} E "TestP2TChaining: various transformations"}
+   end   
 
    proc {TestEmptyChords P2T}
       P10 = [nil]  % Accord vide
@@ -168,18 +266,36 @@ define
    in
       {AssertEquals {P2T P10} E10 "TestEmptyChords"}
    end
+
+   proc {TestEmptyChords_NestedNil P2T}
+      P = [[nil]]
+      E = [[nil]]
+   in
+      {AssertEquals {P2T P} E "TestEmptyChords: nested nil"}
+   end   
       
    proc {TestP2T P2T}
       {TestNotes P2T}
+      {TestNotes_Sharp P2T}
+      {TestNotes_SimpleAtom P2T}
+      {TestNotes_SilenceAtom P2T}
+      {TestChords_Random P2T}
       {TestChords P2T}
       {TestIdentity P2T}
+      {TestIdentity_Silence_Note P2T}
       {TestDuration P2T}
+      {TestDuration_LongNote P2T}
       {TestStretch P2T}
+      {TestStretch_Silence P2T}
       {TestDrone P2T}
+      {TestDrone_Chord P2T}
       {TestMute P2T}
+      {TestMute_Single P2T}
+      {TestMute_Zero P2T}
       {TestTranspose P2T}
       {TestP2TChaining P2T}
-      {TestEmptyChords P2T}   
+      {TestEmptyChords P2T}  
+      {TestEmptyChords_NestedNil P2T} 
       {AssertEquals {P2T nil} nil 'nil partition'}
    end
 
