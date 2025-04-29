@@ -17,10 +17,10 @@
    fun {Mix P2T Music}
       case Music
       of nil then nil
+      [] H|T then {Append {Mix P2T H} {Mix P2T T}}
       [] samples(Samples) then Samples
       [] partition(Partition) then {P2T Partition}
       [] wave(filename:F) then {Project2025.readFile CWD#F}
-      [] H|T then {Append {Mix P2T H} {Mix P2T T}}
       else
          raise error(unknownMusicElement(Music)) end
       end
