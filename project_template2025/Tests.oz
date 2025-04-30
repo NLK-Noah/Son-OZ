@@ -474,14 +474,14 @@ define
    end
    
    proc {TestPartition P2T Mix}
-      P = [a b]
-      M = [partition(P)]
-      E = [
+      P2 = [a b]
+      M2 = [partition(P2)]
+      E2= [
          note(name:a octave:4 sharp:false duration:1.0 instrument:none)
          note(name:b octave:4 sharp:false duration:1.0 instrument:none)
       ]
    in
-      {AssertEquals {Mix P2T M} E "TestPartition: simple partition"}
+      {AssertEquals {Mix P2T M2} E2 "TestPartition: simple partition"}
    end   
    
    proc {TestWave P2T Mix}
@@ -496,7 +496,25 @@ define
    end
 
    proc {TestMerge P2T Mix}
-      skip
+      M1 = [samples([0.1 0.2 0.3])]
+      M2 = [samples([0.4 0.1])]
+      M3 = [samples([0.5])]
+   
+      In = [merge([0.5#M1 0.25#M2 0.25#M3])]
+      Out = [0.3 0.125 0.125]
+   in
+      {AssertEquals {Mix P2T In} Out "TestMerge: mixing 3 musics avec les intensities"}
+   end
+
+   proc {TestMerge_Nil P2T Mix}
+      M1 = [samples([0.1 0.2 0.3])]
+      M2 = [samples([0.4 0.1])]
+      M3 = [nil]
+   
+      In = [merge([0.5#M1 0.25#M2 0.25#M3])]
+      Out = [0.3 0.125 0.0]
+   in 
+      {AssertEquals {Mix P2T In} Out "TestMerge: mixing 3 musics avec nil"}
    end
 
    proc {TestReverse P2T Mix}
@@ -532,6 +550,7 @@ define
       {TestPartition P2T Mix}
       {TestWave P2T Mix}
       {TestMerge P2T Mix}
+      {TestMerge_Nil P2T Mix}
       {TestRepeat P2T Mix}
       {TestLoop P2T Mix}
       {TestClip P2T Mix}

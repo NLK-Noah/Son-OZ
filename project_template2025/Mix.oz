@@ -13,6 +13,29 @@
     % {Project2025.readFile CWD#'wave/animals/cow.wav'} Pour pas le perdre
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+   % Début de la fonction VectorSum
+   fun{VectorSum V}
+      case V of nil then 0.0
+      [] H|T then H + {VectorSum T}
+         else
+            raise error(unknownList(V))
+         end
+      end
+   end
+   %fin de la fonction VectorSum
+    % Début de la fonction Merge 
+    fun {Merge Im P2T}
+         case Im of nil then nil
+         [] (Intensite#MusicDesc)|T then
+            Music = {Mix P2T MusicDesc}
+            MusicScaled = {Map Music fun {$ S} S * Intensite end}
+         in
+            {VectorSum MusicScaled} | {Merge T P2T}
+         end
+   end
+   
+   % Fin de la fonction Merge    
    % Mix principal
    fun {Mix P2T Music}
       case Music
@@ -21,6 +44,7 @@
       [] samples(Samples) then Samples
       [] partition(Partition) then {P2T Partition}
       [] wave(filename:F) then {Project2025.readFile CWD#F}
+      [] merge(Im) then {Merge Im P2T} 
       else
          raise error(unknownMusicElement(Music)) end
       end

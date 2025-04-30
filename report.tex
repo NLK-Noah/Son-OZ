@@ -1,0 +1,60 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{hyperref}
+\geometry{margin=2.5cm}
+
+\title{Projet Son'OZ\\Rapport}
+\author{Kaan Akman (NOMA: 0910-23-00) \\ Noah Moussaoui (NOMA: 8231-23-00 )}
+\date{Avril-Mai 2025}
+
+\begin{document}
+
+\maketitle
+
+\section{Limitations et problèmes connus}
+
+Toutes nos fonctions sont fonctionnelles jusqu'à présent. Voici les erreurs/bugs qui peuvent arriver:
+\begin{itemize}
+    \item Une des problèmes que j'ai rencontré (Kaan), c'était les messages d'erreurs: \texttt{expected 'end'}. Pour ne plus à me soucier, j'ai décidé de ne plus utiliser la structure du \texttt{local ... in}. J'ai donc plutôt travaillé avec des variables.\end{itemize}
+
+
+\section{Utilisation de constructions non-déclaratives}
+
+Nous n'avons pas utilisé de constructions non-déclaratives, notamment comme les cellules, des threads ou des streams. Nous avons préféré de travailler sur des constructions déclaratives avec du pattern matching, des fonctions récursives et aussi l'utilisation directe des listes.
+
+\section{Choix d'implémentation surprenants}
+
+\subsection*{PartitionToTimedList}
+La fonction \texttt{PartitionToTimedList} permet d'utiliser directement les transformations (\texttt{duration}, \texttt{stretch}, \texttt{drone}, \texttt{mute} et \texttt{transpose}) et donc ne sont pas traités par une autre fonction \texttt{transformation}.
+
+\subsection*{Mix}
+Chaque type de morceau est traité dans \texttt{Mix} par un \texttt{case} séparé :
+\begin{itemize}
+    \item \texttt{samples(...)} : directement retourné.
+    \item \texttt{partition(...)} : passé par \texttt{P2T} puis \textit{converti en échantillons}.
+    \item \texttt{wave(...)} : chargé via \texttt{Project2025.load}.
+    \item \texttt{merge([...])} : gestion par addition pondérée, alignement des durées.
+\end{itemize}
+L'ajout à la manière d'une addition de vecteurs est faite à travers la fonction \texttt{AddLists}.
+
+\subsection*{Tests}
+Le fichier \texttt{Tests.oz} couvre les cas de tests suivants:
+\begin{itemize}
+    \item Les transformations simples \texttt{stretch}, \texttt{duration}, \texttt{drone}, \texttt{mute}, \texttt{transpose}.
+    \item Les cas de \texttt{merge} avec plusieurs intensités.
+    \item Le test des \texttt{partition} simples et des \texttt{samples} directs.
+\end{itemize}
+
+\section{Extensions apportées}
+
+\textbf{Aucune extension optionnelle n'a \textit{encore} été activée dans la version soumise.}
+
+\vspace{0.5cm}
+\noindent \textbf{Conclusion:}
+\newline
+Nous avons accompli notre projet dans la manière dont il est demandé, d'abord par la fonction \texttt{PartitionToTimedList} et ensuite \texttt{Mix}. En implémentant une fonction, nous avons ajouté ses tests respectifs qui couvrent les cas normaux et d'autres dans de différents formats. Et finalement, nous avons terminé par avoir un code fonctionnel et respectant les consignes.
+
+\end{document}
