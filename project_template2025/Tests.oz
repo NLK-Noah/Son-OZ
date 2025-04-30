@@ -176,27 +176,64 @@ define
    end   
    
    proc {TestDuration P2T}
-      
-      P4 = [
-         note(name:c octave:4 sharp:false duration:2.0 instrument:none)
-         note(name:e octave:4 sharp:false duration:0.5 instrument:none)
-         silence(duration:1.5)
+      P = [duration(seconds:2.0 partition:[a b])]
+      E = [
+         note(name:a octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:b octave:4 sharp:false duration:1.0 instrument:none)
       ]
    in
-      {AssertEquals {P2T P4} P4 "TestDuration: simple durations"}
+      {AssertEquals {P2T P} E "TestDuration: simple case"}
    end
 
-   proc {TestDuration_LongNote P2T}
-      P = [note(name:g octave:3 sharp:false duration:5.0 instrument:none)]
+   proc {TestDurationSilence P2T}
+      P = [duration(seconds:3.0 partition:[a silence b])]
+      E = [
+         note(name:a octave:4 sharp:false duration:1.0 instrument:none)
+         silence(duration:1.0)
+         note(name:b octave:4 sharp:false duration:1.0 instrument:none)
+      ]
    in
-      {AssertEquals {P2T P} P "TestDuration: long note"}
+      {AssertEquals {P2T P} E "TestDuration: with silence"}
    end
 
-   proc {TestDuration_SilenceDifferentDuration P2T}
-      P = [silence(duration:0.25)]
-      E = [silence(duration:0.25)]
+   proc {TestDurationAdd P2T}
+      P = [duration(seconds:4.0 partition:[a b])]
+      E = [
+         note(name:a octave:4 sharp:false duration:2.0 instrument:none)
+         note(name:b octave:4 sharp:false duration:2.0 instrument:none)
+      ]
    in
-      {AssertEquals {P2T P} E "TestDuration: silence with custom duration"}
+      {AssertEquals {P2T P} E "TestDuration: up to 4.0s"}
+   end
+   
+   proc {TestDurationSub P2T}
+      P = [duration(seconds:1.0 partition:[a b])]
+      E = [
+         note(name:a octave:4 sharp:false duration:0.5 instrument:none)
+         note(name:b octave:4 sharp:false duration:0.5 instrument:none)
+      ]
+   in
+      {AssertEquals {P2T P} E "TestDuration: down to 1.0s"}
+   end
+
+   proc {TestDurationExact P2T}
+      P = [duration(seconds:2.0 partition:[
+         note(name:c octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:d octave:4 sharp:false duration:1.0 instrument:none)
+      ])]
+      E = [
+         note(name:c octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:d octave:4 sharp:false duration:1.0 instrument:none)
+      ]
+   in
+      {AssertEquals {P2T P} E "TestDuration: already matching total duration"}
+   end
+
+   proc {TestDurationEmpty P2T}
+      P = [duration(seconds:3.0 partition:nil)]
+      E = nil
+   in
+      {AssertEquals {P2T P} E "TestDuration: empty partition returns nil"}
    end
    
    proc {TestStretch P2T}
@@ -291,8 +328,62 @@ define
       {AssertEquals {P2T P} E "TestMute: zero silence"}
    end   
 
-   proc {TestTranspose P2T}
-      skip
+   proc {TestTranspose_SimpleNote P2T}
+      P = [transpose(semitones:1 partition:[c])]
+      E = [
+         note(name:c sharp:true octave:4 duration:1.0 instrument:none)
+      ]
+   in
+      {AssertEquals {P2T P} E "TestTranspose: simple note up by 1 semitone"}
+   end
+
+   proc {TestTranspose_SimpleNoteDown P2T}
+      P = [transpose(semitones:~1 partition:[c])]
+      E = [
+         note(name:b octave:3 sharp:false duration:1.0 instrument:none)
+      ]
+   in
+      {AssertEquals {P2T P} E "TestTranspose: simple note down by 1 semitone"}
+   end
+
+   proc {TestTranspose_SeveralNotes P2T}
+      P = [transpose(semitones:2 partition:[c d e])]
+      E = [
+         note(name:d octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:e octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:f sharp:true octave:4 duration:1.0 instrument:none)
+      ]
+   in
+      {AssertEquals {P2T P} E "TestTranspose: several notes up by 2 semitones"}
+   end
+
+   proc {TestTranspose_NegativeOverBoundary P2T}
+      P = [transpose(semitones:~3 partition:[c])]
+      E = [
+         note(name:a octave:3 sharp:false duration:1.0 instrument:none)
+      ]
+   in
+      {AssertEquals {P2T P} E "TestTranspose: note down crossing octave boundary"}
+   end
+
+   proc {TestTranspose_WithChord P2T}
+      P = [transpose(semitones:1 partition:[[c e g]])]
+      E = [
+         [
+            note(name:c sharp:true octave:4 duration:1.0 instrument:none)
+            note(name:f octave:4 sharp:false duration:1.0 instrument:none)
+            note(name:g sharp:true octave:4 duration:1.0 instrument:none)
+         ]
+      ]
+   in
+      {AssertEquals {P2T P} E "TestTranspose: chord up by 1 semitone"}
+   end
+
+   proc {TestTranspose_Empty P2T}
+      P = [transpose(semitones:4 partition:nil)]
+      E = nil
+   in
+      {AssertEquals {P2T P} E "TestTranspose: empty partition"}
    end
 
    proc {TestP2TChaining P2T}
@@ -345,8 +436,11 @@ define
       {TestIdentity_Silence_Note P2T}
       {TestIdentity_Mixed P2T}
       {TestDuration P2T}
-      {TestDuration_LongNote P2T}
-      {TestDuration_SilenceDifferentDuration P2T}
+      {TestDurationSilence P2T}
+      {TestDurationAdd P2T}
+      {TestDurationSub P2T}
+      {TestDurationExact P2T}
+      {TestDurationEmpty P2T}
       {TestStretch P2T}
       {TestStretch_Silence P2T}
       {TestStretch_EmptyPartition P2T}
@@ -357,7 +451,12 @@ define
       {TestMute P2T}
       {TestMute_Single P2T}
       {TestMute_Zero P2T}
-      {TestTranspose P2T}
+      {TestTranspose_SimpleNote P2T}
+      {TestTranspose_SimpleNoteDown P2T}
+      {TestTranspose_SeveralNotes P2T}
+      {TestTranspose_NegativeOverBoundary P2T}
+      {TestTranspose_WithChord P2T}
+      {TestTranspose_Empty P2T}
       {TestP2TChaining P2T}
       {TestEmptyChords P2T}  
       {TestEmptyChords_NestedNil P2T} 
@@ -375,11 +474,25 @@ define
    end
    
    proc {TestPartition P2T Mix}
-      skip
-   end
+      P = [a b]
+      M = [partition(P)]
+      E = [
+         note(name:a octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:b octave:4 sharp:false duration:1.0 instrument:none)
+      ]
+   in
+      {AssertEquals {Mix P2T M} E "TestPartition: simple partition"}
+   end   
    
    proc {TestWave P2T Mix}
-      skip
+      W1 = wave(filename:"wave/animals/cow.wav")
+      W2 = wave(filename:"wave/animals/duck_quack.wav")
+      E1 = {Project2025.readFile "wave/animals/cow.wav"}
+      E2 = {Project2025.readFile "wave/animals/duck_quack.wav"}
+   in
+      {AssertEquals {Mix P2T [samples(E1)]} E1 "TestWave: direct samples"}
+      {AssertEquals {Mix P2T [W1]} E1 "TestWave: wave cow"}
+      {AssertEquals {Mix P2T [W2]} E2 "TestWave: wave duck quack"}
    end
 
    proc {TestMerge P2T Mix}
