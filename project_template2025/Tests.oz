@@ -375,15 +375,47 @@ define
    end
    
    proc {TestPartition P2T Mix}
-      skip
-   end
+      P2 = [a b]
+      M2 = [partition(P2)]
+      E2= [
+         note(name:a octave:4 sharp:false duration:1.0 instrument:none)
+         note(name:b octave:4 sharp:false duration:1.0 instrument:none)
+      ]
+   in
+      {AssertEquals {Mix P2T M2} E2 "TestPartition: simple partition"}
+   end   
    
    proc {TestWave P2T Mix}
-      skip
+      W1 = wave(filename:"wave/animals/cow.wav")
+      W2 = wave(filename:"wave/animals/duck_quack.wav")
+      E1 = {Project2025.readFile "wave/animals/cow.wav"}
+      E2 = {Project2025.readFile "wave/animals/duck_quack.wav"}
+   in
+      {AssertEquals {Mix P2T [samples(E1)]} E1 "TestWave: direct samples"}
+      {AssertEquals {Mix P2T [W1]} E1 "TestWave: wave cow"}
+      {AssertEquals {Mix P2T [W2]} E2 "TestWave: wave duck quack"}
    end
 
    proc {TestMerge P2T Mix}
-      skip
+      M1 = [samples([0.1 0.2 0.3])]
+      M2 = [samples([0.4 0.1])]
+      M3 = [samples([0.5])]
+   
+      In = [merge([0.5#M1 0.25#M2 0.25#M3])]
+      Out = [0.3 0.125 0.125]
+   in
+      {AssertEquals {Mix P2T In} Out "TestMerge: mixing 3 musics avec les intensities"}
+   end
+
+   proc {TestMerge_Nil P2T Mix}
+      M1 = [samples([0.1 0.2 0.3])]
+      M2 = [samples([0.4 0.1])]
+      M3 = [nil]
+   
+      In = [merge([0.5#M1 0.25#M2 0.25#M3])]
+      Out = [0.3 0.125 0.0]
+   in 
+      {AssertEquals {Mix P2T In} Out "TestMerge: mixing 3 musics avec nil"}
    end
 
    proc {TestReverse P2T Mix}
@@ -419,6 +451,7 @@ define
       {TestPartition P2T Mix}
       {TestWave P2T Mix}
       {TestMerge P2T Mix}
+      {TestMerge_Nil P2T Mix}
       {TestRepeat P2T Mix}
       {TestLoop P2T Mix}
       {TestClip P2T Mix}
