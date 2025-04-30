@@ -10,8 +10,10 @@
  define
    % Get the full path of the program
     CWD = {Atom.toString {OS.getCWD}}#"/"
+    % {Project2025.readFile CWD#'wave/animals/cow.wav'} Pour pas le perdre
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
    % Début de la fonction VectorSum
    fun{VectorSum V}
       case V of nil then 0.0
@@ -34,7 +36,8 @@
    end
    
    % Fin de la fonction Merge    
-    fun {Mix P2T Music}
+   % Mix principal
+   fun {Mix P2T Music}
       case Music
       of nil then nil
       [] H|T then {Append {Mix P2T H} {Mix P2T T}}
