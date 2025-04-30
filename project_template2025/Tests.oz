@@ -518,11 +518,35 @@ define
    end
 
    proc {TestReverse P2T Mix}
-      skip
+      P = [samples([0.1 0.2 0.3])]
+      M = [reverse(P)]
+      E = [0.3 0.2 0.1]
+   in
+      {AssertEquals {Mix P2T M} E "TestReverse: basic reversal"}
+   end
+
+   proc {TestRevers2e P2T Mix}
+      P = [samples([0.4 0.5 0.9])]
+      M = [reverse(P)]
+      E = [0.9 0.5 0.4]
+   in
+      {AssertEquals {Mix P2T M} E "TestReverse: basic reversal"}
    end
 
    proc {TestRepeat P2T Mix}
-      skip
+      P = [samples([0.1 0.2])]
+      M = [repeat(amount:3 music:P)]
+      E = [0.1 0.2 0.1 0.2 0.1 0.2]
+   in
+      {AssertEquals {Mix P2T M} E "TestRepeat: repeat 3 times"}
+   end
+
+   proc {TestRepeat2 P2T Mix}
+      P = [samples([0.345 0.232])]
+      M = [repeat(amount:4 music:P)]
+      E = [0.345 0.232 0.345 0.232 0.345 0.232 0.345 0.232]
+   in
+      {AssertEquals {Mix P2T M} E "TestRepeat: repeat 3 times"}
    end
 
    proc {TestLoop P2T Mix}
@@ -551,7 +575,10 @@ define
       {TestWave P2T Mix}
       {TestMerge P2T Mix}
       {TestMerge_Nil P2T Mix}
+      {TestReverse P2T Mix}
+      {TestRevers2e P2T Mix}
       {TestRepeat P2T Mix}
+      {TestRepeat2 P2T Mix}
       {TestLoop P2T Mix}
       {TestClip P2T Mix}
       {TestEcho P2T Mix}

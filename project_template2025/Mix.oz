@@ -34,8 +34,17 @@
             {VectorSum MusicScaled} | {Merge T P2T}
          end
    end
+   % Fin de la fonction Merge   
+      
+   % Début de la fonction Repeat
+   fun {Repeat L N}
+      if N =< 0 then nil
+      else {Append L {Repeat L (N - 1)}}
+      end
+   end
    
-   % Fin de la fonction Merge    
+  
+   % Fin de la fonction Repeat
    % Mix principal
    fun {Mix P2T Music}
       case Music
@@ -44,7 +53,9 @@
       [] samples(Samples) then Samples
       [] partition(Partition) then {P2T Partition}
       [] wave(filename:F) then {Project2025.readFile CWD#F}
-      [] merge(Im) then {Merge Im P2T} 
+      [] merge(Im) then {Merge Im P2T}
+      [] reverse(M) then {Reverse {Mix P2T M}} 
+      [] repeat(amount:A music:M) then {Repeat {Mix P2T M} A}
       else
          raise error(unknownMusicElement(Music)) end
       end
