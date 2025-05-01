@@ -516,7 +516,7 @@ define
       M3 = [samples([0.5])]
    
       In = [merge([0.5#M1 0.25#M2 0.25#M3])]
-      Out = [0.3 0.125 0.125]
+      Out = [0.275 0.125 0.15]
    in
       {AssertEquals {Mix P2T In} Out "TestMerge: mixing 3 musics avec les intensities"}
    end
@@ -524,13 +524,14 @@ define
    proc {TestMerge_Nil P2T Mix}
       M1 = [samples([0.1 0.2 0.3])]
       M2 = [samples([0.4 0.1])]
-      M3 = [nil]
+      M3 = nil
    
       In = [merge([0.5#M1 0.25#M2 0.25#M3])]
-      Out = [0.3 0.125 0.0]
+      Out = [0.15 0.125 0.15]
    in 
-      {AssertEquals {Mix P2T In} Out "TestMerge: mixing 3 musics avec nil"}
-   end
+      {AssertEquals {Normalize {Mix P2T In}} {Normalize Out}
+         "TestMerge: mixing 3 musics avec nil"}
+   end   
 
    proc {TestReverse P2T Mix}
       skip

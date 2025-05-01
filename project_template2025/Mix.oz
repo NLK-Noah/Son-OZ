@@ -106,30 +106,29 @@
       [] H | T then
          {Append {SoundToSamples H} {PartitionToSamples T}}
       end
-   end  
+   end
    
    fun {ApplyMerge P2T MergeList Mix}
-   SampleLists = {Map MergeList
-      fun {$ Intensity#SubMusic}
-         Samples = {Mix P2T SubMusic}
-         Scaled  = {Map Samples fun {$ S} Intensity * S end}
-      in
-         Scaled
-      end}
+      SampleLists = {Map MergeList
+         fun {$ Intensity#Music}
+            local
+               Samples = {Mix P2T Music}
+            in
+               {Map Samples fun {$ S} Intensity * S end}
+            end
+         end}
    in
       {MergeSamples SampleLists}
    end
-
+   
+   
    % Mix principal
    fun {Mix P2T Music}
       case Music
       of nil then nil
       [] H | T then
          case H
-         of nil then
-            {Mix P2T T}
-   
-         [] samples(Sample) then
+         of samples(Sample) then
             {Append Sample {Mix P2T T}}
    
          [] partition(Partition) then
