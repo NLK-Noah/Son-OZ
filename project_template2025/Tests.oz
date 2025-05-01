@@ -571,7 +571,45 @@ define
    end
 
    proc {TestCut P2T Mix}
-      skip
+      M = [samples([0.1 0.2 0.3])]
+      C = [cut(start:0.0 finish:2.0 / 44100.0 music:M)]
+      E = [0.1 0.2]
+   in
+      {AssertEquals {Mix P2T C} E "TestCut: début de la musique"}
+   end
+   
+   proc {TestCut2 P2T Mix}
+      % signal = 5 samples => ~0.000113s total
+      M = [samples([0.1 0.2 0.3 0.4 0.5])]
+      % on extrait la portion de 2e à 4e échantillon
+      C = [cut(start:1.0 / 44100.0 finish:4.0 / 44100.0 music:M)]
+      E = [0.2 0.3 0.4]
+   in
+      {AssertEquals {Mix P2T C} E "TestCut: extrait un segment avec exactitude"}
+   end
+   
+   proc {TestCutPad P2T Mix}
+      M = [samples([0.1 0.2])]
+      C = [cut(start:0.0 finish:4.0 / 44100.0 music:M)]
+      E = [0.1 0.2 0.0 0.0]
+   in
+      {AssertEquals {Mix P2T C} E "TestCut: complète avec silence si trop court"}
+   end
+
+   proc {TestCut_BeyondEnd P2T Mix}
+      M = [samples([0.1 0.2])]
+      C = [cut(start:3.0 / 44100.0 finish:5.0 / 44100.0 music:M)]
+      E = [0.0 0.0] % silence ajouté
+   in
+      {AssertEquals {Mix P2T C} E "TestCut_BeyondEnd: ajoute silence"}
+   end   
+
+   proc {TestCut_PartialPad P2T Mix}
+      M = [samples([0.1 0.2])]
+      C = [cut(start:1.0 / 44100.0 finish:3.0 / 44100.0 music:M)]
+      E = [0.2 0.0]
+   in
+      {AssertEquals {Mix P2T C} E "TestCut_PartialPad: coupe + silence"}
    end
 
    proc {TestMix P2T Mix}
@@ -587,6 +625,10 @@ define
       {TestEcho P2T Mix}
       {TestFade P2T Mix}
       {TestCut P2T Mix}
+      {TestCut2 P2T Mix}
+      {TestCutPad P2T Mix}
+      {TestCut_BeyondEnd P2T Mix}
+      {TestCut_PartialPad P2T Mix}
       {AssertEquals {Mix P2T nil} nil 'nil music'}
    end
 

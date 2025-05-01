@@ -163,6 +163,40 @@
          raise error("Clip: invalid or unsupported arguments") end
       end
    end
+
+   fun {DropUntil N L}
+      if N =< 0 then L
+      else
+         case L of _|T then {DropUntil N - 1 T}
+         [] nil then nil end
+      end
+   end
+   
+   fun {TakeUntil N L}
+      if N =< 0 orelse L == nil then nil
+      else
+         case L of H|T then H | {TakeUntil N - 1 T} end
+      end
+   end
+   
+   fun {PadWithZeros N}
+      if N =< 0 then nil
+      else 0.0 | {PadWithZeros N - 1}
+      end
+   end
+   
+   fun {Cut Start Finish Music}
+      StartIndex = {Float.toInt Start * 44100.0}
+      EndIndex = {Float.toInt Finish * 44100.0}
+      Needed = (EndIndex - StartIndex)
+   
+      Dropped = {DropUntil StartIndex Music}
+      Taken = {TakeUntil Needed Dropped}
+      Missing = (Needed - {Length Taken})
+      Padding = {PadWithZeros Missing}
+   in
+      {Append Taken Padding}
+   end
    
    % Mix principal
    fun {Mix P2T Music}
@@ -190,7 +224,10 @@
 
          [] clip(...) then
             {Append {Clip H {Mix P2T H.music}} {Mix P2T T}}
-   
+
+         [] cut(...) then
+            {Append {Cut H.start H.finish {Mix P2T H.music}} {Mix P2T T}}                 
+
          else
             raise error(unsupportedMusicPart(H)) end
          end
