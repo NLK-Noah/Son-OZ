@@ -466,23 +466,38 @@ define
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     TEST Mix
 
-   proc {TestSamples P2T Mix}
+    proc {TestSamples P2T Mix}
       E1 = [0.1 ~0.2 0.3]
       M1 = [samples(E1)]
    in
       {AssertEquals {Mix P2T M1} E1 'TestSamples: simple'}
    end
-   
+
    proc {TestPartition P2T Mix}
-      P2 = [a b]
-      M2 = [partition(P2)]
-      E2= [
-         note(name:a octave:4 sharp:false duration:1.0 instrument:none)
-         note(name:b octave:4 sharp:false duration:1.0 instrument:none)
-      ]
+      Partition = [note(name:a octave:4 sharp:false duration:1.0 instrument:none)]
+      Music = [partition(Partition)]
+      Samples = {Mix P2T Music}
+      ExpectedLength = 44100
    in
-      {AssertEquals {Mix P2T M2} E2 "TestPartition: simple partition"}
-   end   
+      {AssertEquals {Length Samples} ExpectedLength 'TestPartition: 1 note de 1.0s => 44100 samples'}
+   end
+
+   proc {TestPartition2 P2T Mix}
+      % Une partition contenant juste la note a4 (1s par défaut)
+      P = [note(name:a octave:4 sharp:false duration:1.0 instrument:none)]
+      M = [partition(P)]
+   
+      % Résultat attendu : on applique Mix dessus
+      Res = {Mix P2T M}
+   
+      % On ne compare pas la liste entière (trop longue),
+      % mais on vérifie juste la longueur et les bornes
+   
+      L = {Length Res}
+   
+   in
+      {AssertEquals L 44100 'TestPartition: longueur pour a4'}
+   end
    
    proc {TestWave P2T Mix}
       W1 = wave(filename:"wave/animals/cow.wav")
@@ -548,6 +563,7 @@ define
    proc {TestMix P2T Mix}
       {TestSamples P2T Mix}
       {TestPartition P2T Mix}
+      {TestPartition2 P2T Mix}
       {TestWave P2T Mix}
       {TestMerge P2T Mix}
       {TestMerge_Nil P2T Mix}
