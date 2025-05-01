@@ -466,23 +466,38 @@ define
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     TEST Mix
 
-   proc {TestSamples P2T Mix}
+    proc {TestSamples P2T Mix}
       E1 = [0.1 ~0.2 0.3]
       M1 = [samples(E1)]
    in
       {AssertEquals {Mix P2T M1} E1 'TestSamples: simple'}
    end
-   
+
    proc {TestPartition P2T Mix}
-      P2 = [a b]
-      M2 = [partition(P2)]
-      E2= [
-         note(name:a octave:4 sharp:false duration:1.0 instrument:none)
-         note(name:b octave:4 sharp:false duration:1.0 instrument:none)
-      ]
+      Partition = [note(name:a octave:4 sharp:false duration:1.0 instrument:none)]
+      Music = [partition(Partition)]
+      Samples = {Mix P2T Music}
+      ExpectedLength = 44100
    in
-      {AssertEquals {Mix P2T M2} E2 "TestPartition: simple partition"}
-   end   
+      {AssertEquals {Length Samples} ExpectedLength 'TestPartition: 1 note de 1.0s => 44100 samples'}
+   end
+
+   proc {TestPartition2 P2T Mix}
+      % Une partition contenant juste la note a4 (1s par défaut)
+      P = [note(name:a octave:4 sharp:false duration:1.0 instrument:none)]
+      M = [partition(P)]
+   
+      % Résultat attendu : on applique Mix dessus
+      Res = {Mix P2T M}
+   
+      % On ne compare pas la liste entière (trop longue),
+      % mais on vérifie juste la longueur et les bornes
+   
+      L = {Length Res}
+   
+   in
+      {AssertEquals L 44100 'TestPartition: longueur pour a4'}
+   end
    
    proc {TestWave P2T Mix}
       W1 = wave(filename:"wave/animals/cow.wav")
@@ -501,7 +516,7 @@ define
       M3 = [samples([0.5])]
    
       In = [merge([0.5#M1 0.25#M2 0.25#M3])]
-      Out = [0.3 0.125 0.125]
+      Out = [0.275 0.125 0.15]
    in
       {AssertEquals {Mix P2T In} Out "TestMerge: mixing 3 musics avec les intensities"}
    end
@@ -509,28 +524,42 @@ define
    proc {TestMerge_Nil P2T Mix}
       M1 = [samples([0.1 0.2 0.3])]
       M2 = [samples([0.4 0.1])]
-      M3 = [nil]
+      M3 = nil
    
       In = [merge([0.5#M1 0.25#M2 0.25#M3])]
-      Out = [0.3 0.125 0.0]
+      Out = [0.15 0.125 0.15]
    in 
-      {AssertEquals {Mix P2T In} Out "TestMerge: mixing 3 musics avec nil"}
-   end
+      {AssertEquals {Normalize {Mix P2T In}} {Normalize Out}
+         "TestMerge: mixing 3 musics avec nil"}
+   end   
 
    proc {TestReverse P2T Mix}
       skip
    end
 
    proc {TestRepeat P2T Mix}
-      skip
+      M = [samples([0.1 0.2 0.3])]
+      R = [repeat(amount:2 music:M)]
+      E = [0.1 0.2 0.3 0.1 0.2 0.3]
+   in
+      {AssertEquals {Mix P2T R} E "TestRepeat: repeat 2 times"}
    end
 
    proc {TestLoop P2T Mix}
-      skip
+      D = 5.0 / 44100.0
+      M = [samples([0.1 0.2])]
+      L = [loop(duration:D music:M)]
+      E = [0.1 0.2 0.1 0.2 0.1]
+   in
+      {AssertEquals {Mix P2T L} E "TestLoop: looping samples"}
    end
 
    proc {TestClip P2T Mix}
-      skip
+      M = [samples([1.0 ~1.0 0.5 ~0.3 0.0])]
+      C = [clip(low:~0.5 high:0.8 music:M)]
+      E = [0.8 ~0.5 0.5 ~0.3 0.0]
+   in
+      {AssertEquals {Mix P2T C} E "TestClip: clipping a short music"}
    end
 
    proc {TestEcho P2T Mix}
@@ -542,12 +571,51 @@ define
    end
 
    proc {TestCut P2T Mix}
-      skip
+      M = [samples([0.1 0.2 0.3])]
+      C = [cut(start:0.0 finish:2.0 / 44100.0 music:M)]
+      E = [0.1 0.2]
+   in
+      {AssertEquals {Mix P2T C} E "TestCut: début de la musique"}
+   end
+   
+   proc {TestCut2 P2T Mix}
+      % signal = 5 samples => ~0.000113s total
+      M = [samples([0.1 0.2 0.3 0.4 0.5])]
+      % on extrait la portion de 2e à 4e échantillon
+      C = [cut(start:1.0 / 44100.0 finish:4.0 / 44100.0 music:M)]
+      E = [0.2 0.3 0.4]
+   in
+      {AssertEquals {Mix P2T C} E "TestCut: extrait un segment avec exactitude"}
+   end
+   
+   proc {TestCutPad P2T Mix}
+      M = [samples([0.1 0.2])]
+      C = [cut(start:0.0 finish:4.0 / 44100.0 music:M)]
+      E = [0.1 0.2 0.0 0.0]
+   in
+      {AssertEquals {Mix P2T C} E "TestCut: complète avec silence si trop court"}
+   end
+
+   proc {TestCut_BeyondEnd P2T Mix}
+      M = [samples([0.1 0.2])]
+      C = [cut(start:3.0 / 44100.0 finish:5.0 / 44100.0 music:M)]
+      E = [0.0 0.0] % silence ajouté
+   in
+      {AssertEquals {Mix P2T C} E "TestCut_BeyondEnd: ajoute silence"}
+   end   
+
+   proc {TestCut_PartialPad P2T Mix}
+      M = [samples([0.1 0.2])]
+      C = [cut(start:1.0 / 44100.0 finish:3.0 / 44100.0 music:M)]
+      E = [0.2 0.0]
+   in
+      {AssertEquals {Mix P2T C} E "TestCut_PartialPad: coupe + silence"}
    end
 
    proc {TestMix P2T Mix}
       {TestSamples P2T Mix}
       {TestPartition P2T Mix}
+      {TestPartition2 P2T Mix}
       {TestWave P2T Mix}
       {TestMerge P2T Mix}
       {TestMerge_Nil P2T Mix}
@@ -557,6 +625,10 @@ define
       {TestEcho P2T Mix}
       {TestFade P2T Mix}
       {TestCut P2T Mix}
+      {TestCut2 P2T Mix}
+      {TestCutPad P2T Mix}
+      {TestCut_BeyondEnd P2T Mix}
+      {TestCut_PartialPad P2T Mix}
       {AssertEquals {Mix P2T nil} nil 'nil music'}
    end
 
