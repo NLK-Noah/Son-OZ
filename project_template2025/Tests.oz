@@ -538,15 +538,28 @@ define
    end
 
    proc {TestRepeat P2T Mix}
-      skip
+      M = [samples([0.1 0.2 0.3])]
+      R = [repeat(amount:2 music:M)]
+      E = [0.1 0.2 0.3 0.1 0.2 0.3]
+   in
+      {AssertEquals {Mix P2T R} E "TestRepeat: repeat 2 times"}
    end
 
    proc {TestLoop P2T Mix}
-      skip
+      D = 5.0 / 44100.0
+      M = [samples([0.1 0.2])]
+      L = [loop(duration:D music:M)]
+      E = [0.1 0.2 0.1 0.2 0.1]
+   in
+      {AssertEquals {Mix P2T L} E "TestLoop: looping samples"}
    end
 
    proc {TestClip P2T Mix}
-      skip
+      M = [samples([1.0 ~1.0 0.5 ~0.3 0.0])]
+      C = [clip(low:~0.5 high:0.8 music:M)]
+      E = [0.8 ~0.5 0.5 ~0.3 0.0]
+   in
+      {AssertEquals {Mix P2T C} E "TestClip: clipping a short music"}
    end
 
    proc {TestEcho P2T Mix}

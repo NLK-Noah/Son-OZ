@@ -120,7 +120,49 @@
    in
       {MergeSamples SampleLists}
    end
+
+   fun {Repeat Amount Music}
+      if Amount =< 0 then nil
+      else
+         {Append Music {Repeat (Amount - 1) Music}}
+      end
+   end
+
+   fun {Loop Duration Music}
+      SampleCount = {Float.toInt Duration * 44100.0}
+      fun {Extend Music N}
+         if N =< 0 then nil
+         else
+            {Append Music {Extend Music (N - {Length Music})}}
+         end
+      end
+   in
+      {List.take {Extend Music SampleCount} SampleCount}
+   end
+
+   fun {Clip ClipSpec L}
+      case ClipSpec
+      of clip(start:Start duration:Dur music:_) then
+         StartIndex = {Float.toInt Start * 44100.0}
+         Length     = {Float.toInt Dur * 44100.0}
+      in
+         {List.take {List.drop L StartIndex} Length}
    
+      [] clip(low:Low high:High music:_) then
+         if Low >= High then
+            raise error("Clip: low must be < high") end
+         else
+            {Map L fun {$ X}
+               if X < Low then Low
+               elseif X > High then High
+               else X
+               end
+            end}
+         end
+      else
+         raise error("Clip: invalid or unsupported arguments") end
+      end
+   end
    
    % Mix principal
    fun {Mix P2T Music}
@@ -134,11 +176,20 @@
          [] partition(Partition) then
             {Append {PartitionToSamples {P2T Partition}} {Mix P2T T}}
    
-         [] wave(filename: F) then
+         [] wave(filename:F) then
             {Append {Project2025.readFile F} {Mix P2T T}}
    
-         [] merge(MI) then
-            {Append {ApplyMerge P2T MI Mix} {Mix P2T T}}
+         [] merge(MWI) then
+            {Append {ApplyMerge P2T MWI Mix} {Mix P2T T}}
+
+         [] repeat(amount:A music:M) then
+            {Append {Repeat A {Mix P2T M}} {Mix P2T T}}
+
+         [] loop(duration:D music:M) then
+            {Append {Loop D {Mix P2T M}} {Mix P2T T}}
+
+         [] clip(...) then
+            {Append {Clip H {Mix P2T H.music}} {Mix P2T T}}
    
          else
             raise error(unsupportedMusicPart(H)) end
