@@ -12,6 +12,7 @@
     CWD = {Atom.toString {OS.getCWD}}#"/"
     % {Project2025.readFile CWD#'wave/animals/cow.wav'} Pour pas le perdre
 
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
    % Début de la fonction VectorSum
@@ -42,9 +43,37 @@
       else {Append L {Repeat L (N - 1)}}
       end
    end
-   
-  
    % Fin de la fonction Repeat
+
+   % Début de la fonction Loop
+   fun {Loop D M P2T FiveSamples}
+      Samples = {Mix P2T M}
+      SampleLen = {Length Samples}
+      TotalNeeded = {FloatToInt D / FiveSamples}
+      
+      fun {RepeatUntil N Acc}
+         if N =< 0 then Acc
+         elseif N < SampleLen then
+            {Append Acc {List.take Samples N}}
+         else
+            {RepeatUntil (N - SampleLen) {Append Acc Samples}}
+         end
+      end
+   in
+      {RepeatUntil TotalNeeded nil}
+   end
+   
+   
+   % Fin de la fonction Loop
+   % Début de la fonction Clip
+   fun {Clip Low High X}
+      if X < Low then Low
+      elseif X > High then High
+      else X
+      end
+   end
+   % Fin de la fonction Clip
+       
    % Mix principal
    fun {Mix P2T Music}
       case Music
@@ -56,8 +85,10 @@
       [] merge(Im) then {Merge Im P2T}
       [] reverse(M) then {Reverse {Mix P2T M}} 
       [] repeat(amount:A music:M) then {Repeat {Mix P2T M} A}
-      else
-         raise error(unknownMusicElement(Music)) end
+      [] loop(duration:D music:M) then {Loop D M P2T 0.00011337868}
+      [] clip(low:Low high:High music:M) then {Map {Mix P2T M} fun {$ X} {Clip Low High X} end}
+      else  
+         raise error(unknownMusicElement(Music  )) end
       end
    end
 end

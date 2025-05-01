@@ -550,12 +550,34 @@ define
    end
 
    proc {TestLoop P2T Mix}
-      skip
+      M = [samples([0.1 0.2 0.3])]
+      % Chaque sample dure 0.00011337868 s
+      % 3 samples → durée = 3 * 0.00011337868 = 0.00034013604
+      % Pour loop à 0.0006s → il faut ~5 samples donc 2 répétitions
+      LoopMusic = [loop(duration:0.0006 music:M)]
+      Expected = [0.1 0.2 0.3 0.1 0.2]  % tronqué avant d'ajouter 0.3
+   in
+      {AssertEquals {Mix P2T LoopMusic} Expected "TestLoop: loop with truncation"}
    end
+   
+   
 
    proc {TestClip P2T Mix}
-      skip
+      M = [samples([0.1 0.5 0.9 1.2 ~0.1 ~0.5])]
+      Clip = [clip(low:0.0 high:1.0 music:M)]
+      Expected = [0.1 0.5 0.9 1.0 0.0 0.0]
+   in
+      {AssertEquals {Mix P2T Clip} Expected "TestClip: clip entre 0.0 et  1.0"}
    end
+
+
+   proc {TestClipNegatif P2T Mix}
+      M = [clip(low:~0.2 high:0.3 music:[samples([~0.5 ~0.2 0.0 0.25 0.4])])]
+      E = [~0.2 ~0.2 0.0 0.25 0.3]
+   in
+      {AssertEquals {Mix P2T M} E "TestClip: clip avec des negatives"}
+   end
+   
 
    proc {TestEcho P2T Mix}
       skip
@@ -581,6 +603,7 @@ define
       {TestRepeat2 P2T Mix}
       {TestLoop P2T Mix}
       {TestClip P2T Mix}
+      {TestClipNegatif P2T Mix}
       {TestEcho P2T Mix}
       {TestFade P2T Mix}
       {TestCut P2T Mix}
