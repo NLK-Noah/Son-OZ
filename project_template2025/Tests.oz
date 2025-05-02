@@ -483,18 +483,10 @@ define
    end
 
    proc {TestPartition2 P2T Mix}
-      % Une partition contenant juste la note a4 (1s par défaut)
       P = [note(name:a octave:4 sharp:false duration:1.0 instrument:none)]
       M = [partition(P)]
-   
-      % Résultat attendu : on applique Mix dessus
       Res = {Mix P2T M}
-   
-      % On ne compare pas la liste entière (trop longue),
-      % mais on vérifie juste la longueur et les bornes
-   
       L = {Length Res}
-   
    in
       {AssertEquals L 44100 'TestPartition: longueur pour a4'}
    end
@@ -529,8 +521,7 @@ define
       In = [merge([0.5#M1 0.25#M2 0.25#M3])]
       Out = [0.15 0.125 0.15]
    in 
-      {AssertEquals {Normalize {Mix P2T In}} {Normalize Out}
-         "TestMerge: mixing 3 musics avec nil"}
+      {AssertEquals {Normalize {Mix P2T In}} {Normalize Out} "TestMerge: mixing 3 musics avec nil"}
    end   
 
    proc {TestReverse P2T Mix}
@@ -563,8 +554,30 @@ define
    end
 
    proc {TestEcho P2T Mix}
-      skip
-   end 
+      Base = samples([1.0 0.0])
+      E = [echo(delay:2.0*0.00011337868 decay:0.5 repeat:2 music:Base)]
+      R = [1.0 0.0 0.5 0.0 0.25 0.0]
+   in
+      {AssertEquals {Mix P2T E} R "TestEcho: simple echo with decay"}
+   end
+
+
+   proc {TestEcho3Repeats P2T Mix}
+      Base = samples([1.0 0.0])
+      E = [echo(delay:2.0*0.00011337868 decay:0.5 repeat:3 music:Base)]
+      R = [1.0 0.0 0.5 0.0 0.25 0.0 0.125 0.0]
+   in
+      {AssertEquals {Mix P2T E} R "TestEcho: 3 echoes with decay 0.5"}
+   end
+
+
+   proc {TestEchoNoDecay P2T Mix}
+      Base = samples([0.8 0.0])
+      E = [echo(delay:1.0*0.00011337868 decay:1.0 repeat:2 music:Base)]
+      R = [0.8 0.8 0.8 0.0]
+   in
+      {AssertEquals {Mix P2T E} R "TestEcho: decay=1.0, overlapping echoes"}
+   end
 
    proc {TestFade P2T Mix}
       Input = [1.0 1.0 1.0 1.0 1.0 1.0]
@@ -593,9 +606,7 @@ define
    end
    
    proc {TestCut2 P2T Mix}
-      % signal = 5 samples => ~0.000113s total
       M = [samples([0.1 0.2 0.3 0.4 0.5])]
-      % on extrait la portion de 2e à 4e échantillon
       C = [cut(start:1.0 / 44100.0 finish:4.0 / 44100.0 music:M)]
       E = [0.2 0.3 0.4]
    in
@@ -613,7 +624,7 @@ define
    proc {TestCut_BeyondEnd P2T Mix}
       M = [samples([0.1 0.2])]
       C = [cut(start:3.0 / 44100.0 finish:5.0 / 44100.0 music:M)]
-      E = [0.0 0.0] % silence ajouté
+      E = [0.0 0.0]
    in
       {AssertEquals {Mix P2T C} E "TestCut_BeyondEnd: ajoute silence"}
    end   
@@ -637,6 +648,8 @@ define
       {TestLoop P2T Mix}
       {TestClip P2T Mix}
       {TestEcho P2T Mix}
+      {TestEcho3Repeats P2T Mix}
+      {TestEchoNoDecay P2T Mix}
       {TestFade P2T Mix}
       {TestFadeOut P2T Mix}
       {TestCut P2T Mix}

@@ -258,6 +258,30 @@
    in
       {Apply 0 Music}
    end   
+
+   % Applique un effet d'écho à une musique 
+   fun {Echo Delay Decay Repeat Music P2T}
+      Base =
+         case Music of samples(S) then S
+         else {Mix P2T Music} end
+      DelaySamples = {Float.toInt (Delay / 0.00011337868)}
+
+      fun {MakeEcho I}
+         if I > Repeat then nil
+         else
+            Level = {Pow Decay {Int.toFloat I}}
+            Echoed = {Map Base fun {$ X} X * Level end}
+            Insert = {InsertZeros (DelaySamples * I)}
+            EchoPart = {Append Insert Echoed}
+         in
+            EchoPart | {MakeEcho (I + 1)}
+         end
+      end
+
+      EchoList = Base | {MakeEcho 1}
+   in
+      {MergeListsOfSamples EchoList}
+   end
    
    % Fonction principale Mix : interprète tous les types de musique et retourne des échantillons
    fun {Mix P2T Music}
@@ -291,6 +315,9 @@
             
          [] fade(...) then
             {Append {Fade H.start H.finish {Mix P2T H.music}} {Mix P2T T}}
+
+         [] echo(delay:D decay:Dec repeat:R music:M) then
+            {Append {Echo D Dec R M P2T} {Mix P2T T}} 
 
          else
             raise error(wrongMusicPart(H)) end
