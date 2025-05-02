@@ -613,8 +613,22 @@ define
    
 
    proc {TestFade P2T Mix}
-      skip
-   end
+      Input = [1.0 1.0 1.0 1.0 1.0 1.0]
+      Dur = 5.0 / 44100.0
+      M = [fade(start:Dur finish:0.0 music:[samples(Input)])]
+      E = [0.0 0.2 0.4 0.6 0.8 1.0]
+   in
+      {AssertEquals {Mix P2T M} E "TestFade: fade-in sur 6 samples"}
+   end 
+   
+   proc {TestFadeOut P2T Mix}
+      Input = [1.0 1.0 1.0 1.0 1.0]
+      Dur = 5.0 / 44100.0
+      M = [fade(start:0.0 finish:Dur music:[samples(Input)])]
+      E = [0.8 0.6 0.4 0.2 0.0]
+   in
+      {AssertEquals {Mix P2T M} E "TestFadeOut: fade-out sur 6 samples"}
+   end   
 
    proc {TestCut P2T Mix}
       M = [samples([0.1 0.2 0.3])]
@@ -672,6 +686,7 @@ define
       {TestEcho3Repeats P2T Mix}
       {TestEchoNoDecay P2T Mix}
       {TestFade P2T Mix}
+      {TestFadeOut P2T Mix}
       {TestCut P2T Mix}
       {TestCut2 P2T Mix}
       {TestCutPad P2T Mix}

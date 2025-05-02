@@ -10,6 +10,7 @@
  define
    % Get the full path of the program
     CWD = {Atom.toString {OS.getCWD}}#"/"
+    SampleRate = 44100.0
     % {Project2025.readFile CWD#'wave/animals/cow.wav'} Pour pas le perdre
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -226,6 +227,36 @@
       {MergeSamples EchoList}
    end
    
+   %% Applique un fondu linéaire sur le début et la fin d'une liste d'échantillons
+   %% start : durée (en secondes) de fondu entrant (0.0 → 1.0)
+   %% finish : durée (en secondes) de fondu sortant (1.0 → 0.0)
+   %% music : liste de samples
+   fun {Fade Start Finish Music}
+      local
+         N = {Length Music}
+         StartCount = {Float.toInt {Float.ceil Start * SampleRate}}
+         FinishCount = {Float.toInt {Float.ceil Finish * SampleRate}}
+      in
+         fun {FadeCoeff I}
+            if StartCount > 0 andthen I < StartCount then
+               {IntToFloat I} / {IntToFloat StartCount}
+            elseif FinishCount > 0 andthen I >= N - FinishCount then
+               {IntToFloat (N - I - 1)} / {IntToFloat FinishCount}
+            else
+               1.0
+            end
+         end
+      end
+      fun {Apply I L}
+         case L
+         of nil then nil
+         [] H|T then (H * {FadeCoeff I}) | {Apply I + 1 T}
+         end
+      end
+   in
+      {Apply 0 Music}
+   end   
+
    % Mix principal
    fun {Mix P2T Music}
       case Music of nil then nil
@@ -256,7 +287,10 @@
             {Append {Cut H.start H.finish {Mix P2T H.music}} {Mix P2T T}}
    
          [] echo(delay:D decay:Dec repeat:R music:M) then
-            {Append {Echo D Dec R M P2T} {Mix P2T T}}         
+            {Append {Echo D Dec R M P2T} {Mix P2T T}} 
+         
+         [] fade(...) then
+            {Append {Fade H.start H.finish {Mix P2T H.music}} {Mix P2T T}}
    
          else
             raise error(unsupportedMusicPart(H)) end
