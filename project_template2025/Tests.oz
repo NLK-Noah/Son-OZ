@@ -563,8 +563,54 @@ define
    end
 
    proc {TestEcho P2T Mix}
-      skip
+      % Musique de base
+      Base = samples([1.0 0.0])
+      % echo: delay = 2 échantillons, decay = 0.5, repeat = 2
+      E = [echo(delay:2.0*0.00011337868 decay:0.5 repeat:2 music:Base)]
+      % Résultat attendu :
+      % 1.0       (original)
+      % 0.0
+      % 0.5       (1er echo)
+      % 0.0
+      % 0.25      (2ème echo)
+      % 0.0
+      R = [1.0 0.0 0.5 0.0 0.25 0.0]
+   in
+      {AssertEquals {Mix P2T E} R "TestEcho: simple echo with decay"}
    end
+
+
+   proc {TestEcho3Repeats P2T Mix}
+      Base = samples([1.0 0.0])
+      E = [echo(delay:2.0*0.00011337868 decay:0.5 repeat:3 music:Base)]
+      % Résultat attendu :
+      % original   : 1.0   0.0
+      % echo 1     : 0.5   0.0   (après 2 samples)
+      % echo 2     : 0.25  0.0   (après 4 samples)
+      % echo 3     : 0.125 0.0   (après 6 samples)
+      R = [1.0 0.0 0.5 0.0 0.25 0.0 0.125 0.0]
+   in
+      {AssertEquals {Mix P2T E} R "TestEcho: 3 echoes with decay 0.5"}
+   end
+   
+   
+   proc {TestEchoNoDecay P2T Mix}
+      Base = samples([0.8 0.0])
+      E = [echo(delay:1.0*0.00011337868 decay:1.0 repeat:2 music:Base)]
+      % Résultat attendu :
+      % original   : 0.8  0.0
+      % echo 1     : 0.8  0.0   (after 1 sample)
+      % echo 2     : 0.8  0.0   (after 2 samples from first echo)
+      % merged:
+      % index 0: 0.8
+      % index 1: 0.0 + 0.8 = 0.8
+      % index 2: 0.0 + 0.8 = 0.8
+      R = [0.8 0.8 0.8 0.0]
+   in
+      {AssertEquals {Mix P2T E} R "TestEcho: decay=1.0, overlapping echoes"}
+   end
+   
+   
 
    proc {TestFade P2T Mix}
       skip
@@ -623,6 +669,8 @@ define
       {TestLoop P2T Mix}
       {TestClip P2T Mix}
       {TestEcho P2T Mix}
+      {TestEcho3Repeats P2T Mix}
+      {TestEchoNoDecay P2T Mix}
       {TestFade P2T Mix}
       {TestCut P2T Mix}
       {TestCut2 P2T Mix}

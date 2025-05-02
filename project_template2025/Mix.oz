@@ -110,13 +110,17 @@
    
    fun {ApplyMerge P2T MergeList Mix}
       SampleLists = {Map MergeList
-         fun {$ Intensity#Music}
+      fun {$ Pair}
+         case Pair of Intensity#Music then
             local
                Samples = {Mix P2T Music}
             in
                {Map Samples fun {$ S} Intensity * S end}
             end
-         end}
+         else
+            raise error(invalidMergePair(Pair)) end
+         end
+      end}
    in
       {MergeSamples SampleLists}
    end
@@ -197,11 +201,34 @@
    in
       {Append Taken Padding}
    end
+
+   fun {Echo Delay Decay Repeat Music P2T}
+      Base =
+         case Music of samples(S) then S
+         else {Mix P2T Music}
+         end
+      DelaySamples = {Float.toInt (Delay / 0.00011337868)}
+
+      fun {MakeEcho I}
+         if I > Repeat then nil
+         else
+            Level = {Pow Decay {Int.toFloat I}}
+            Echoed = {Map Base fun {$ X} X * Level end}
+            Padding = {PadWithZeros (DelaySamples * I)}
+            EchoPart = {Append Padding Echoed}
+         in
+            EchoPart | {MakeEcho (I + 1)}
+         end
+      end
+   
+      EchoList = Base | {MakeEcho 1}
+   in
+      {MergeSamples EchoList}
+   end
    
    % Mix principal
    fun {Mix P2T Music}
-      case Music
-      of nil then nil
+      case Music of nil then nil
       [] H | T then
          case H
          of samples(Sample) then
@@ -215,22 +242,30 @@
    
          [] merge(MWI) then
             {Append {ApplyMerge P2T MWI Mix} {Mix P2T T}}
-
+   
          [] repeat(amount:A music:M) then
             {Append {Repeat A {Mix P2T M}} {Mix P2T T}}
-
+   
          [] loop(duration:D music:M) then
             {Append {Loop D {Mix P2T M}} {Mix P2T T}}
-
+   
          [] clip(...) then
             {Append {Clip H {Mix P2T H.music}} {Mix P2T T}}
-
+   
          [] cut(...) then
-            {Append {Cut H.start H.finish {Mix P2T H.music}} {Mix P2T T}}                 
-
+            {Append {Cut H.start H.finish {Mix P2T H.music}} {Mix P2T T}}
+   
+         [] echo(delay:D decay:Dec repeat:R music:M) then
+            {Append {Echo D Dec R M P2T} {Mix P2T T}}         
+   
          else
             raise error(unsupportedMusicPart(H)) end
          end
+   
+      [] samples(Sample) then Sample
+   
+      else
+         raise error(unknownMusicElement(Music)) end
       end
-   end   
+   end     
 end
