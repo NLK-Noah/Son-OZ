@@ -1,4 +1,14 @@
- 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Projet Son'OZ - LINFO1104 (UCLouvain)
+%%
+%% Auteurs :
+%%   - Kaan [0910-23-00]
+%%   - Noah [8231-23-00]
+%%
+%% Fichier : Mix.oz
+%% Description : Interprétation de structures musicales en échantillons WAV
+%%               (notes, silences, effets, partitions, filtres).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  functor
  import
     Project2025
@@ -8,12 +18,25 @@
  export 
     mix: Mix
  define
+    % Variable qui permet d'activer nos extensions 
+    ActivatorOfExtensions = true
     % Constantes
     Pi = 3.14159265358979323846
     SampleRate = 44100.0
    % Get the full path of the program
     CWD = {Atom.toString {OS.getCWD}}#"/"
 
+   % Clip chaque échantillon entre -1.0 et 1.0
+   fun {NormalizeIntervals L}
+      fun {Value X}
+         if X > 1.0 then 1.0
+         elseif X < ~1.0 then ~1.0
+         else X
+         end
+      end
+   in
+      {Map L Value}
+   end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % Convertit une note en index de 0 à 11
@@ -60,6 +83,13 @@
       end
    end
 
+   % Génère une liste de zéros de longueur N
+   fun {Zeros N}
+      if N =< 0 then nil
+      else 0.0 | {Zeros N - 1}
+      end
+   end   
+
    % Convertit une note ou un silence étendu en liste d'échantillons
    fun {NoteToSamples NoteOrSilence}
       case NoteOrSilence
@@ -67,7 +97,7 @@
          SampleLength = {Float.toInt D * SampleRate}
       in
          if SampleLength =< 0 then nil 
-         else {List.make SampleLength 0.0} end
+         else {Zeros SampleLength} end
    
       [] note(name:N octave:O sharp:S duration:D instrument:I) then
          Frequency = {NoteToFrequency N O S}
@@ -282,46 +312,68 @@
    in
       {MergeListsOfSamples EchoList}
    end
+
+   fun {Reverse Music}
+      fun {ReverseAcc L Acc}
+         case L
+         of nil then Acc
+         [] H|T then {ReverseAcc T H|Acc}
+         end
+      end
+   in
+      {ReverseAcc Music nil}
+   end
    
    % Fonction principale Mix : interprète tous les types de musique et retourne des échantillons
    fun {Mix P2T Music}
       case Music
       of nil then nil
       [] H|T then
-         case H
-         of samples(Sample) then
-            {Append Sample {Mix P2T T}}
-   
-         [] partition(Partition) then
-            {Append {PartitionToSamples {P2T Partition}} {Mix P2T T}}
-   
-         [] wave(filename:F) then
-            {Append {Project2025.readFile F} {Mix P2T T}}
-   
-         [] merge(MWI) then
-            {Append {ApplyMerge P2T MWI Mix} {Mix P2T T}}
+         local Result = case H
+               of samples(Sample) then
+                  {Append Sample {Mix P2T T}}
 
-         [] repeat(amount:A music:M) then
-            {Append {Repeat A {Mix P2T M}} {Mix P2T T}}
+               [] partition(Partition) then
+                  {Append {PartitionToSamples {P2T Partition}} {Mix P2T T}}
 
-         [] loop(duration:D music:M) then
-            {Append {Loop D {Mix P2T M}} {Mix P2T T}}
+               [] wave(filename:F) then
+                  {Append {Project2025.readFile F} {Mix P2T T}}
 
-         [] clip(...) then
-            {Append {Clip H {Mix P2T H.music}} {Mix P2T T}}
+               [] merge(MWI) then
+                  {Append {ApplyMerge P2T MWI Mix} {Mix P2T T}}
 
-         [] cut(...) then
-            {Append {Cut H.start H.finish {Mix P2T H.music}} {Mix P2T T}}    
-            
-         [] fade(...) then
-            {Append {Fade H.start H.finish {Mix P2T H.music}} {Mix P2T T}}
+               [] repeat(amount:A music:M) then
+                  {Append {Repeat A {Mix P2T M}} {Mix P2T T}}
 
-         [] echo(delay:D decay:Dec repeat:R music:M) then
-            {Append {Echo D Dec R M P2T} {Mix P2T T}} 
+               [] loop(duration:D music:M) then
+                  {Append {Loop D {Mix P2T M}} {Mix P2T T}}
 
-         else
-            raise error(wrongMusicPart(H)) end
+               [] clip(...) then
+                  {Append {Clip H {Mix P2T H.music}} {Mix P2T T}}
+
+               [] cut(...) then
+                  {Append {Cut H.start H.finish {Mix P2T H.music}} {Mix P2T T}} 
+
+               [] fade(...) then
+                  {Append {Fade H.start H.finish {Mix P2T H.music}} {Mix P2T T}}
+
+               [] echo(delay:D decay:Dec repeat:R music:M) then
+                  {Append {Echo D Dec R M P2T} {Mix P2T T}} 
+
+               [] reverse(...) then
+                  if ActivatorOfExtensions then
+                     {Append {Reverse {Mix P2T H.music}} {Mix P2T T}}
+                  else
+                     {System.show "L'extension n'est pas activée, reverse ne sera pas appliqué"}
+                     {Mix P2T T}
+                  end
+               else
+                  raise error(wrongMusic(H)) end
+            end
+         in
+            {NormalizeIntervals Result}
          end
       end
-   end   
+   end
+   
 end

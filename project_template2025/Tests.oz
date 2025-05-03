@@ -1,3 +1,13 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Projet Son'OZ - LINFO1104 (UCLouvain)
+%%
+%% Auteurs :
+%%   - Kaan [0910-23-00]
+%%   - Noah [8231-23-00]
+%%
+%% Fichier : Tests.oz
+%% Description : Suite de tests unitaires pour PartitionToTimedList et Mix.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 functor
 import
    Project2025
@@ -7,7 +17,7 @@ import
 export
    test: Test
 define
-
+   ActivatorOfExtensions = true
    PassedTests = {Cell.new 0}
    TotalTests  = {Cell.new 0}
 
@@ -237,7 +247,7 @@ define
    end
    
    proc {TestStretch P2T}
-      P5 = [stretch(factor:2.0 partition:[a b silence])]
+      P5 = [stretch(factor:2.0 [a b silence])]
       E5 = [
          note(name:a octave:4 sharp:false duration:2.0 instrument:none)
          note(name:b octave:4 sharp:false duration:2.0 instrument:none)
@@ -248,25 +258,26 @@ define
    end 
    
    proc {TestStretch_Silence P2T}
-      P = [stretch(factor:3.0 partition:[silence])]
+      P = [stretch(factor:3.0 [silence])]
       E = [silence(duration:3.0)]
    in
       {AssertEquals {P2T P} E "TestStretch: silence stretched"}
    end
-
+   
    proc {TestStretch_EmptyPartition P2T}
-      P = [stretch(factor:2.0 partition:nil)]
+      P = [stretch(factor:2.0 nil)]
       E = nil
    in
       {AssertEquals {P2T P} E "TestStretch: empty partition"}
    end   
-
+   
    proc {TestStretch_SingleNote P2T}
-      P = [stretch(factor:3.0 partition:[d])]
+      P = [stretch(factor:3.0 [d])]
       E = [note(name:d octave:4 sharp:false duration:3.0 instrument:none)]
    in
       {AssertEquals {P2T P} E "TestStretch: single note stretched"}
-   end   
+   end 
+   
 
    proc {TestDrone_SingleNote P2T}
    P = [drone(note:[a] amount:3)]
@@ -524,10 +535,6 @@ define
       {AssertEquals {Normalize {Mix P2T In}} {Normalize Out} "TestMerge: mixing 3 musics avec nil"}
    end   
 
-   proc {TestReverse P2T Mix}
-      skip
-   end
-
    proc {TestRepeat P2T Mix}
       M = [samples([0.1 0.2 0.3])]
       R = [repeat(amount:2 music:M)]
@@ -613,7 +620,7 @@ define
       {AssertEquals {Mix P2T C} E "TestCut: extrait un segment avec exactitude"}
    end
    
-   proc {TestCutPad P2T Mix}
+   proc {TestCut3 P2T Mix}
       M = [samples([0.1 0.2])]
       C = [cut(start:0.0 finish:4.0 / 44100.0 music:M)]
       E = [0.1 0.2 0.0 0.0]
@@ -629,12 +636,24 @@ define
       {AssertEquals {Mix P2T C} E "TestCut_BeyondEnd: ajoute silence"}
    end   
 
-   proc {TestCut_PartialPad P2T Mix}
+   proc {TestCut_Partial P2T Mix}
       M = [samples([0.1 0.2])]
       C = [cut(start:1.0 / 44100.0 finish:3.0 / 44100.0 music:M)]
       E = [0.2 0.0]
    in
-      {AssertEquals {Mix P2T C} E "TestCut_PartialPad: coupe + silence"}
+      {AssertEquals {Mix P2T C} E "TestCut_Partial: coupe + silence"}
+   end
+
+   proc {TestReverse P2T Mix}
+      if ActivatorOfExtensions then
+         M = [samples([0.1 0.2 0.3])]
+         R = [reverse(music: M)]
+         E = [0.3 0.2 0.1]
+      in
+         {AssertEquals {Mix P2T R} E "TestReverse: inversion d'une musique"}
+      else
+         {System.show "L'extension n'est pas activée, reverse ne sera pas appliquée"}
+      end
    end
 
    proc {TestMix P2T Mix}
@@ -654,9 +673,10 @@ define
       {TestFadeOut P2T Mix}
       {TestCut P2T Mix}
       {TestCut2 P2T Mix}
-      {TestCutPad P2T Mix}
+      {TestCut3 P2T Mix}
       {TestCut_BeyondEnd P2T Mix}
-      {TestCut_PartialPad P2T Mix}
+      {TestCut_Partial P2T Mix}
+      {TestReverse P2T Mix}
       {AssertEquals {Mix P2T nil} nil 'nil music'}
    end
 
