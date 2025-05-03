@@ -1,3 +1,13 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Projet Son'OZ - LINFO1104 (UCLouvain)
+%%
+%% Auteurs :
+%%   - Akman Kaan [0910-23-00]
+%%   - Moussaoui Noah [8231-23-00]
+%%
+%% Fichier : Tests.oz
+%% Description : Suite de tests unitaires pour PartitionToTimedList et Mix.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 functor
 import
    Project2025
@@ -7,7 +17,10 @@ import
 export
    test: Test
 define
-
+    % Variable qui permet d'activer nos extensions 
+    % Il suffit de switch à true pour activer l'extension
+    % et de switch à false pour la désactiver
+   ActivatorOfExtensions = false
    PassedTests = {Cell.new 0}
    TotalTests  = {Cell.new 0}
 
@@ -237,7 +250,7 @@ define
    end
    
    proc {TestStretch P2T}
-      P5 = [stretch(factor:2.0 partition:[a b silence])]
+      P5 = [stretch(factor:2.0 [a b silence])]
       E5 = [
          note(name:a octave:4 sharp:false duration:2.0 instrument:none)
          note(name:b octave:4 sharp:false duration:2.0 instrument:none)
@@ -248,25 +261,26 @@ define
    end 
    
    proc {TestStretch_Silence P2T}
-      P = [stretch(factor:3.0 partition:[silence])]
+      P = [stretch(factor:3.0 [silence])]
       E = [silence(duration:3.0)]
    in
       {AssertEquals {P2T P} E "TestStretch: silence stretched"}
    end
-
+   
    proc {TestStretch_EmptyPartition P2T}
-      P = [stretch(factor:2.0 partition:nil)]
+      P = [stretch(factor:2.0 nil)]
       E = nil
    in
       {AssertEquals {P2T P} E "TestStretch: empty partition"}
    end   
-
+   
    proc {TestStretch_SingleNote P2T}
-      P = [stretch(factor:3.0 partition:[d])]
+      P = [stretch(factor:3.0 [d])]
       E = [note(name:d octave:4 sharp:false duration:3.0 instrument:none)]
    in
       {AssertEquals {P2T P} E "TestStretch: single note stretched"}
-   end   
+   end 
+   
 
    proc {TestDrone_SingleNote P2T}
    P = [drone(note:[a] amount:3)]
@@ -483,18 +497,10 @@ define
    end
 
    proc {TestPartition2 P2T Mix}
-      % Une partition contenant juste la note a4 (1s par défaut)
       P = [note(name:a octave:4 sharp:false duration:1.0 instrument:none)]
       M = [partition(P)]
-   
-      % Résultat attendu : on applique Mix dessus
       Res = {Mix P2T M}
-   
-      % On ne compare pas la liste entière (trop longue),
-      % mais on vérifie juste la longueur et les bornes
-   
       L = {Length Res}
-   
    in
       {AssertEquals L 44100 'TestPartition: longueur pour a4'}
    end
@@ -529,13 +535,8 @@ define
       In = [merge([0.5#M1 0.25#M2 0.25#M3])]
       Out = [0.15 0.125 0.15]
    in 
-      {AssertEquals {Normalize {Mix P2T In}} {Normalize Out}
-         "TestMerge: mixing 3 musics avec nil"}
+      {AssertEquals {Normalize {Mix P2T In}} {Normalize Out} "TestMerge: mixing 3 musics avec nil"}
    end   
-
-   proc {TestReverse P2T Mix}
-      skip
-   end
 
    proc {TestRepeat P2T Mix}
       M = [samples([0.1 0.2 0.3])]
@@ -563,12 +564,48 @@ define
    end
 
    proc {TestEcho P2T Mix}
-      skip
+      Base = samples([1.0 0.0])
+      E = [echo(delay:2.0*0.00011337868 decay:0.5 repeat:2 music:Base)]
+      R = [1.0 0.0 0.5 0.0 0.25 0.0]
+   in
+      {AssertEquals {Mix P2T E} R "TestEcho: simple echo with decay"}
+   end
+
+
+   proc {TestEcho3Repeats P2T Mix}
+      Base = samples([1.0 0.0])
+      E = [echo(delay:2.0*0.00011337868 decay:0.5 repeat:3 music:Base)]
+      R = [1.0 0.0 0.5 0.0 0.25 0.0 0.125 0.0]
+   in
+      {AssertEquals {Mix P2T E} R "TestEcho: 3 echoes with decay 0.5"}
+   end
+
+
+   proc {TestEchoNoDecay P2T Mix}
+      Base = samples([0.8 0.0])
+      E = [echo(delay:1.0*0.00011337868 decay:1.0 repeat:2 music:Base)]
+      R = [0.8 0.8 0.8 0.0]
+   in
+      {AssertEquals {Mix P2T E} R "TestEcho: decay=1.0, overlapping echoes"}
    end
 
    proc {TestFade P2T Mix}
-      skip
-   end
+      Input = [1.0 1.0 1.0 1.0 1.0 1.0]
+      Dur = 5.0 / 44100.0
+      M = [fade(start:Dur finish:0.0 music:[samples(Input)])]
+      E = [0.0 0.2 0.4 0.6 0.8 1.0]
+   in
+      {AssertEquals {Mix P2T M} E "TestFade: fade-in sur 6 samples"}
+   end 
+   
+   proc {TestFadeOut P2T Mix}
+      Input = [1.0 1.0 1.0 1.0 1.0]
+      Dur = 5.0 / 44100.0
+      M = [fade(start:0.0 finish:Dur music:[samples(Input)])]
+      E = [0.8 0.6 0.4 0.2 0.0]
+   in
+      {AssertEquals {Mix P2T M} E "TestFadeOut: fade-out sur 6 samples"}
+   end   
 
    proc {TestCut P2T Mix}
       M = [samples([0.1 0.2 0.3])]
@@ -579,16 +616,14 @@ define
    end
    
    proc {TestCut2 P2T Mix}
-      % signal = 5 samples => ~0.000113s total
       M = [samples([0.1 0.2 0.3 0.4 0.5])]
-      % on extrait la portion de 2e à 4e échantillon
       C = [cut(start:1.0 / 44100.0 finish:4.0 / 44100.0 music:M)]
       E = [0.2 0.3 0.4]
    in
       {AssertEquals {Mix P2T C} E "TestCut: extrait un segment avec exactitude"}
    end
    
-   proc {TestCutPad P2T Mix}
+   proc {TestCut3 P2T Mix}
       M = [samples([0.1 0.2])]
       C = [cut(start:0.0 finish:4.0 / 44100.0 music:M)]
       E = [0.1 0.2 0.0 0.0]
@@ -599,17 +634,29 @@ define
    proc {TestCut_BeyondEnd P2T Mix}
       M = [samples([0.1 0.2])]
       C = [cut(start:3.0 / 44100.0 finish:5.0 / 44100.0 music:M)]
-      E = [0.0 0.0] % silence ajouté
+      E = [0.0 0.0]
    in
       {AssertEquals {Mix P2T C} E "TestCut_BeyondEnd: ajoute silence"}
    end   
 
-   proc {TestCut_PartialPad P2T Mix}
+   proc {TestCut_Partial P2T Mix}
       M = [samples([0.1 0.2])]
       C = [cut(start:1.0 / 44100.0 finish:3.0 / 44100.0 music:M)]
       E = [0.2 0.0]
    in
-      {AssertEquals {Mix P2T C} E "TestCut_PartialPad: coupe + silence"}
+      {AssertEquals {Mix P2T C} E "TestCut_Partial: coupe + silence"}
+   end
+
+   proc {TestReverse P2T Mix}
+      if ActivatorOfExtensions then
+         M = [samples([0.1 0.2 0.3])]
+         R = [reverse(music: M)]
+         E = [0.3 0.2 0.1]
+      in
+         {AssertEquals {Mix P2T R} E "TestReverse: inversion d'une musique"}
+      else
+         {System.show "L'extension n'est pas activée, reverse ne sera pas appliquée"}
+      end
    end
 
    proc {TestMix P2T Mix}
@@ -623,12 +670,16 @@ define
       {TestLoop P2T Mix}
       {TestClip P2T Mix}
       {TestEcho P2T Mix}
+      {TestEcho3Repeats P2T Mix}
+      {TestEchoNoDecay P2T Mix}
       {TestFade P2T Mix}
+      {TestFadeOut P2T Mix}
       {TestCut P2T Mix}
       {TestCut2 P2T Mix}
-      {TestCutPad P2T Mix}
+      {TestCut3 P2T Mix}
       {TestCut_BeyondEnd P2T Mix}
-      {TestCut_PartialPad P2T Mix}
+      {TestCut_Partial P2T Mix}
+      {TestReverse P2T Mix}
       {AssertEquals {Mix P2T nil} nil 'nil music'}
    end
 

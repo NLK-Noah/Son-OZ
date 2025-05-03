@@ -4,57 +4,57 @@
 \usepackage[french]{babel}
 \usepackage{geometry}
 \usepackage{hyperref}
+\usepackage{enumitem}
 \geometry{margin=2.5cm}
 
-\title{Projet Son'OZ\\Rapport}
-\author{Kaan Akman (NOMA: 0910-23-00) \\ Noah Moussaoui (NOMA: 8231-23-00 )}
-\date{Avril-Mai 2025}
+\title{\textbf{LSINC1104 – Son’OZ Project 2025}\\Rapport de Projet}
+\author{
+  Kaan Akman\\
+  NOMA: 0910-23-00
+  \and
+  Noah Moussaoui\\
+  NOMA: 8231-23-00
+}
+\date{19 avril 2025}
 
 \begin{document}
 
 \maketitle
 
-\section{Limitations et problèmes connus}
+\section*{1. Limitations et problèmes connus}
 
-Toutes nos fonctions sont fonctionnelles jusqu'à présent. Voici les erreurs/bugs qui peuvent arriver:
-\begin{itemize}
-    \item Une des problèmes que j'ai rencontré (Kaan), c'était les messages d'erreurs: \texttt{expected 'end'}. Pour ne plus à me soucier, j'ai décidé de ne plus utiliser la structure du \texttt{local ... in}. J'ai donc plutôt travaillé avec des variables.\end{itemize}
+Nous n’avons pas rencontré de problèmes majeurs qui pourraient nuire au fonctionnement global du projet.
 
+Cependant, nous n’avons pas pu implémenter l’extension \texttt{instrument}. De plus, lorsque nous lançons la commande \texttt{make run} avec une composition différente de \texttt{joy.dj.oz}, un message d’erreur peut apparaître dans \texttt{main.oz}, ce qui reste assez mystérieux. Heureusement, cela n’empêche pas la génération du fichier \texttt{out.wav}, et la mélodie reste bien jouable.
 
-\section{Utilisation de constructions non-déclaratives}
+Nous avons également été confrontés à quelques confusions au niveau des signatures des filtres (comme \texttt{fade}, \texttt{cut}, etc.), notamment sur l’usage ou non de labels dans les arguments. Cela a entraîné quelques essais-erreurs lors de l’écriture des tests.
 
-Nous n'avons pas utilisé de constructions non-déclaratives, notamment comme les cellules, des threads ou des streams. Nous avons préféré de travailler sur des constructions déclaratives avec du pattern matching, des fonctions récursives et aussi l'utilisation directe des listes.
+\section*{2. Constructions non-déclaratives}
 
-\section{Choix d'implémentation surprenants}
+Nous n’utilisons aucune construction non-déclarative dans notre projet : pas de cellule, port ou thread. Le projet repose exclusivement sur des constructions déclaratives, avec du pattern matching, des définitions locales via \texttt{local...in...end}, et des appels récursifs.
 
-\subsection*{PartitionToTimedList}
-La fonction \texttt{PartitionToTimedList} permet d'utiliser directement les transformations (\texttt{duration}, \texttt{stretch}, \texttt{drone}, \texttt{mute} et \texttt{transpose}) et donc ne sont pas traités par une autre fonction \texttt{transformation}.
+\section*{3. Choix d’implémentation surprenants}
 
-\subsection*{Mix}
-Chaque type de morceau est traité dans \texttt{Mix} par un \texttt{case} séparé :
-\begin{itemize}
-    \item \texttt{samples(...)} : directement retourné.
-    \item \texttt{partition(...)} : passé par \texttt{P2T} puis \textit{converti en échantillons}.
-    \item \texttt{wave(...)} : chargé via \texttt{Project2025.load}.
-    \item \texttt{merge([...])} : gestion par addition pondérée, alignement des durées.
-\end{itemize}
-L'ajout à la manière d'une addition de vecteurs est faite à travers la fonction \texttt{AddLists}.
+Nous avons veillé à écrire un code compréhensible pour tout lecteur, avec des noms de variables explicites et des commentaires clairs.
 
-\subsection*{Tests}
-Le fichier \texttt{Tests.oz} couvre les cas de tests suivants:
-\begin{itemize}
-    \item Les transformations simples \texttt{stretch}, \texttt{duration}, \texttt{drone}, \texttt{mute}, \texttt{transpose}.
-    \item Les cas de \texttt{merge} avec plusieurs intensités.
-    \item Le test des \texttt{partition} simples et des \texttt{samples} directs.
-\end{itemize}
+Nous n'avons pas pris de décisions d’implémentation particulièrement surprenantes. Nous avons simplement respecté la structure recommandée dans l’énoncé, en nous appuyant autant que possible sur la documentation officielle de Mozart/Oz.
 
-\section{Extensions apportées}
+\section*{4. Extensions réalisées}
 
-\textbf{Aucune extension optionnelle n'a \textit{encore} été activée dans la version soumise.}
+\subsection*{Reverse}
 
-\vspace{0.5cm}
-\noindent \textbf{Conclusion:}
-\newline
-Nous avons accompli notre projet dans la manière dont il est demandé, d'abord par la fonction \texttt{PartitionToTimedList} et ensuite \texttt{Mix}. En implémentant une fonction, nous avons ajouté ses tests respectifs qui couvrent les cas normaux et d'autres dans de différents formats. Et finalement, nous avons terminé par avoir un code fonctionnel et respectant les consignes.
+L’unique extension que nous avons implémentée est le filtre \texttt{reverse}. Celui-ci permet d’inverser une musique, en renversant l’ordre des échantillons. Cela peut servir à produire des effets sonores spéciaux ou des transitions créatives.
+
+L’extension est activée via une variable booléenne \texttt{ActivatorOfExtensions}, définie dans le fichier \texttt{Mix.oz}. Lorsqu’elle vaut \texttt{true}, le filtre \texttt{reverse} est appliqué. Si elle vaut \texttt{false}, il est ignoré (afin de ne pas interférer avec les tests automatiques).
+
+Malheureusement, nous n'avons pas réussi à rendre ce commutateur dynamique via le \texttt{Makefile}. Nous avons également rencontré des difficultés techniques pour partager cette variable entre fichiers, comme entre \texttt{Mix.oz} et \texttt{Tests.oz}. En conséquence, la variable est dupliquée dans les deux fichiers, et son état doit être modifié manuellement.
+
+L’extension est testée dans \texttt{Tests.oz} sur un exemple simple avec trois échantillons.
+
+\section*{Conclusion}
+
+Nous avons respecté les consignes de l’énoncé et les signatures de code données. Malgré quelques difficultés liées à la compréhension du langage Oz, des formats de structures et des messages du compilateur, nous avons pu livrer un projet complet et fonctionnel.
+
+Le projet a été entièrement réalisé par nous-mêmes, sans recours à des générateurs de code externes. Nous avons appris à structurer du code déclaratif, gérer des partitions musicales complexes, et concevoir un moteur audio miniature en Oz.
 
 \end{document}

@@ -1,3 +1,13 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Projet Son'OZ - LINFO1104 (UCLouvain)
+%%
+%% Auteurs :
+%%   - Akman Kaan [0910-23-00]
+%%   - Moussaoui Noah [8231-23-00]
+%%
+%% Fichier : PartitionToTimedList.oz
+%% Description : Transformation de partitions musicales vers le format étendu.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 functor
 import
    Project2025
@@ -281,16 +291,48 @@ define
                      Chord | {PartitionToTimedList T}
                   end
                 end
-            elseif {IsRecord H} andthen {Label H} == stretch then 
-                {Append {PartitionToTimedList {Stretch H.factor H.partition}} {PartitionToTimedList T}}
+            elseif {IsRecord H} andthen {Label H} == stretch then
+               local Parts
+                     Factor = H.factor
+               in
+                  % Permettra de gérer les deux cas, si champ nommé ou pas, comme ça on aura plus de soucis (dans les Tests aussi)
+                  if {HasFeature H partition} then
+                     Parts = H.partition
+                  else
+                     Parts = H.1
+                  end
+                  {Append {Stretch Factor {PartitionToTimedList Parts}} {PartitionToTimedList T}}
+               end               
             elseif {IsRecord H} andthen {Label H} == duration then 
-                {Append {Duration H.seconds H.partition} {PartitionToTimedList T}}                         
+               local Parts
+                     Seconds = H.seconds
+               in
+                  if {HasFeature H partition} then Parts = H.partition
+                  else Parts = H.1 end
+                  {Append {Duration Seconds Parts} {PartitionToTimedList T}}                         
+               end
+                                        
             elseif {IsRecord H} andthen {Label H} == drone then 
-                {Append {Drone H.note H.amount} {PartitionToTimedList T}}             
+               local Notes Amount
+               in
+                  Notes  = if {HasFeature H note} then H.note else H.1 end
+                  Amount = if {HasFeature H amount} then H.amount else H.2 end
+                  {Append {Drone Notes Amount} {PartitionToTimedList T}}             
+               end
+
             elseif {IsRecord H} andthen {Label H} == mute then 
-                {Append {Mute H.amount} {PartitionToTimedList T}}    
+               local Amount = if {HasFeature H amount} then H.amount else H.1 end
+               in
+                  {Append {Mute Amount} {PartitionToTimedList T}}    
+               end
+            
             elseif {IsRecord H} andthen {Label H} == transpose then
-                {Append {PartitionToTimedList {Transpose H.semitones H.partition}} {PartitionToTimedList T}}                      
+               local Semitones Parts
+               in
+                  Semitones = if {HasFeature H semitones} then H.semitones else H.1 end
+                  Parts = if {HasFeature H partition} then H.partition else H.2 end
+                  {Append {PartitionToTimedList {Transpose Semitones Parts}} {PartitionToTimedList T}}                      
+               end                
             else 
                 {NoteToExtended H} | {PartitionToTimedList T}
             end
