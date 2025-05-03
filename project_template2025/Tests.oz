@@ -2,8 +2,8 @@
 %% Projet Son'OZ - LINFO1104 (UCLouvain)
 %%
 %% Auteurs :
-%%   - Kaan [0910-23-00]
-%%   - Noah [8231-23-00]
+%%   - Akman Kaan [0910-23-00]
+%%   - Moussaoui Noah [8231-23-00]
 %%
 %% Fichier : Tests.oz
 %% Description : Suite de tests unitaires pour PartitionToTimedList et Mix.
@@ -17,7 +17,10 @@ import
 export
    test: Test
 define
-   ActivatorOfExtensions = true
+    % Variable qui permet d'activer nos extensions 
+    % Il suffit de switch à true pour activer l'extension
+    % et de switch à false pour la désactiver
+   ActivatorOfExtensions = false
    PassedTests = {Cell.new 0}
    TotalTests  = {Cell.new 0}
 

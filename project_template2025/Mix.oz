@@ -2,8 +2,8 @@
 %% Projet Son'OZ - LINFO1104 (UCLouvain)
 %%
 %% Auteurs :
-%%   - Kaan [0910-23-00]
-%%   - Noah [8231-23-00]
+%%   - Akman Kaan [0910-23-00]
+%%   - Moussaoui Noah [8231-23-00]
 %%
 %% Fichier : Mix.oz
 %% Description : Interprétation de structures musicales en échantillons WAV
@@ -19,7 +19,9 @@
     mix: Mix
  define
     % Variable qui permet d'activer nos extensions 
-    ActivatorOfExtensions = true
+    % Il suffit de switch à true pour activer l'extension
+    % et de switch à false pour la désactiver
+    ActivatorOfExtensions = false
     % Constantes
     Pi = 3.14159265358979323846
     SampleRate = 44100.0

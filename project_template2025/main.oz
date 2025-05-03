@@ -2,8 +2,8 @@
 %% Projet Son'OZ - LINFO1104 (UCLouvain)
 %%
 %% Auteurs :
-%%   - Kaan [0910-23-00]
-%%   - Noah [8231-23-00]
+%%   - Akman Kaan [0910-23-00]
+%%   - Moussaoui Noah [8231-23-00]
 %%
 %% Fichier : main.oz
 %% Description : Entrée principale du projet. Charge les partitions,

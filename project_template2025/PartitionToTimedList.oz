@@ -2,8 +2,8 @@
 %% Projet Son'OZ - LINFO1104 (UCLouvain)
 %%
 %% Auteurs :
-%%   - Kaan [0910-23-00]
-%%   - Noah [8231-23-00]
+%%   - Akman Kaan [0910-23-00]
+%%   - Moussaoui Noah [8231-23-00]
 %%
 %% Fichier : PartitionToTimedList.oz
 %% Description : Transformation de partitions musicales vers le format étendu.
@@ -292,27 +292,24 @@ define
                   end
                 end
             elseif {IsRecord H} andthen {Label H} == stretch then
-               local SubPartition
+               local Parts
                      Factor = H.factor
                in
-                  % Supporte à la fois stretch(factor:... [notes]) et stretch(factor:... partition:...)
+                  % Permettra de gérer les deux cas, si champ nommé ou pas, comme ça on aura plus de soucis (dans les Tests aussi)
                   if {HasFeature H partition} then
-                     SubPartition = H.partition
+                     Parts = H.partition
                   else
-                     SubPartition = H.1
+                     Parts = H.1
                   end
-                  {Append {Stretch Factor {PartitionToTimedList SubPartition}} {PartitionToTimedList T}}
+                  {Append {Stretch Factor {PartitionToTimedList Parts}} {PartitionToTimedList T}}
                end               
             elseif {IsRecord H} andthen {Label H} == duration then 
-               local SubPartition
+               local Parts
                      Seconds = H.seconds
                in
-                  if {HasFeature H partition} then
-                     SubPartition = H.partition
-                  else
-                     SubPartition = H.1
-                  end
-                  {Append {Duration Seconds SubPartition} {PartitionToTimedList T}}                         
+                  if {HasFeature H partition} then Parts = H.partition
+                  else Parts = H.1 end
+                  {Append {Duration Seconds Parts} {PartitionToTimedList T}}                         
                end
                                         
             elseif {IsRecord H} andthen {Label H} == drone then 
@@ -330,13 +327,12 @@ define
                end
             
             elseif {IsRecord H} andthen {Label H} == transpose then
-               local Semitones SubPartition
+               local Semitones Parts
                in
                   Semitones = if {HasFeature H semitones} then H.semitones else H.1 end
-                  SubPartition = if {HasFeature H partition} then H.partition else H.2 end
-                  {Append {PartitionToTimedList {Transpose Semitones SubPartition}} {PartitionToTimedList T}}                      
-               end
-                                  
+                  Parts = if {HasFeature H partition} then H.partition else H.2 end
+                  {Append {PartitionToTimedList {Transpose Semitones Parts}} {PartitionToTimedList T}}                      
+               end                
             else 
                 {NoteToExtended H} | {PartitionToTimedList T}
             end
