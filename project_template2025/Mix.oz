@@ -96,35 +96,15 @@
          else {Zeros SampleLength} end
    
       [] note(name:N octave:O sharp:S duration:D instrument:I) then
-         if ActivatorOfExtensions == false orelse I == none then
-            Frequency = {NoteToFrequency N O S}
-            SampleLength = {Float.toInt D * SampleRate}
-         in
-            {CreateSamples SampleLength Frequency}
-         else
-            SharpName = if S then "#" else "" end
-            NoteName = {VirtualString.toString N#SharpName#O}
-            InstrumentName = {VirtualString.toString I}
-            FilePath = "wave/instruments/"
-            Format = ".wav"
-
-            NewInstrumentFilename = InstrumentName # "_" # NoteName
-            NewInstrumentPathname = FilePath # NewInstrumentFilename # Format
-            Result = {VirtualString.toString NewInstrumentPathname}
-
-            ExtractSamples = {Project2025.readFile Result}
-            SampleLength = {Length ExtractSamples}
-            CountSamples = {Float.toInt D * SampleRate}
-         in
-            if SampleLength >= CountSamples then {GetElements CountSamples ExtractSamples}
-            else Insert = {InsertZeros CountSamples-SampleLength}
-            in
-               {Append ExtractSamples Insert}
-            end
-         end
+         Frequency = {NoteToFrequency N O S}
+         SampleLength = {Float.toInt D * SampleRate}
+      in
+         {CreateSamples SampleLength Frequency}
+         % instrument devra s'insérer ici dans un if/else (si I=true et extensions=true)
+         % échoué
       else
-         raise error(wrongNoteOrSilence(NoteOrSilence)) end
-      end  
+         raise error(invalidNoteOrSilence(NoteOrSilence)) end
+      end
    end   
 
    % Fusionne plusieurs listes de samples en additionnant leurs éléments
