@@ -225,7 +225,7 @@
       else
          raise error("Clip: wrong arguments") end
       end
-   end
+   end   
 
    % Supprime les X premiers éléments d’une liste
    fun {DeleteElements X L}
@@ -344,27 +344,30 @@
                [] merge(MWI) then
                   {Append {ApplyMerge P2T MWI Mix} {Mix P2T T}}
 
-               [] repeat(amount:A music:M) then
+               [] repeat(amount:A M) then
                   {Append {Repeat A {Mix P2T M}} {Mix P2T T}}
 
-               [] loop(duration:D music:M) then
+               [] loop(duration:D M) then
                   {Append {Loop D {Mix P2T M}} {Mix P2T T}}
 
-               [] clip(...) then
-                  {Append {Clip H {Mix P2T H.music}} {Mix P2T T}}
+               [] clip(start:S duration:D music:M) then
+                  {Append {Clip clip(start:S duration:D music:M) {Mix P2T M}} {Mix P2T T}}
+               
+               [] clip(low:L high:H M) then
+                  {Append {Clip clip(low:L high:H music:M) {Mix P2T M}} {Mix P2T T}}                                            
 
-               [] cut(...) then
-                  {Append {Cut H.start H.finish {Mix P2T H.music}} {Mix P2T T}} 
+               [] cut(start:S finish:F M) then
+                  {Append {Cut S F {Mix P2T M}} {Mix P2T T}}
 
-               [] fade(...) then
-                  {Append {Fade H.start H.finish {Mix P2T H.music}} {Mix P2T T}}
-
-               [] echo(delay:D decay:Dec repeat:R music:M) then
+               [] fade(start:S finish:F M) then
+                  {Append {Fade S F {Mix P2T M}} {Mix P2T T}}
+               
+               [] echo(delay:D decay:Dec repeat:R M) then
                   {Append {Echo D Dec R M P2T} {Mix P2T T}} 
-
-               [] reverse(...) then
+               
+               [] reverse(M) then
                   if ActivatorOfExtensions then
-                     {Append {Reverse {Mix P2T H.music}} {Mix P2T T}}
+                     {Append {Reverse {Mix P2T M}} {Mix P2T T}}
                   else
                      {System.show "L'extension n'est pas activée, reverse ne sera pas appliqué"}
                      {Mix P2T T}
