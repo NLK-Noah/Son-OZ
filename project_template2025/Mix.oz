@@ -1,13 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Projet Son'OZ - LINFO1104 (UCLouvain)
-%%
-%% Auteurs :
-%%   - Akman Kaan [0910-23-00]
-%%   - Moussaoui Noah [8231-23-00]
-%%
-%% Fichier : Mix.oz
-%% Description : Interprétation de structures musicales en échantillons WAV
-%%               (notes, silences, effets, partitions, filtres).
+%% Projet Son'OZ - LINFO1104
+%% Akman Kaan [0910-23-00]
+%% Moussaoui Noah [8231-23-00]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  functor
  import
@@ -21,7 +15,7 @@
     % Variable qui permet d'activer nos extensions 
     % Il suffit de switch à true pour activer l'extension
     % et de switch à false pour la désactiver
-    ActivatorOfExtensions = false
+    ActivatorOfExtensions = true
     % Constantes
     Pi = 3.14159265358979323846
     SampleRate = 44100.0
@@ -41,7 +35,7 @@
    end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    % Convertit une note en index de 0 à 11
+    % Convertit une note en index
     fun {NoteToIndex Name Sharp}
       case Name#Sharp
       of c#false then 0 
@@ -69,7 +63,7 @@
       ({Pow 2.0 ({IntToFloat H} / 12.0)} * 440.0)
    end   
 
-   % Génère une liste d'échantillons sinusoïdaux d'amplitude 0.5 pour une fréquence donnée
+   % Génère une liste d'échantillons sinusoïdaux
    fun {CreateSamples TotalSamples F}
       fun {Loop I}
          if I >= TotalSamples then nil
@@ -102,16 +96,38 @@
          else {Zeros SampleLength} end
    
       [] note(name:N octave:O sharp:S duration:D instrument:I) then
-         Frequency = {NoteToFrequency N O S}
-         SampleLength = {Float.toInt D * SampleRate}
-      in
-         {CreateSamples SampleLength Frequency}
+         if ActivatorOfExtensions == false orelse I == none then
+            Frequency = {NoteToFrequency N O S}
+            SampleLength = {Float.toInt D * SampleRate}
+         in
+            {CreateSamples SampleLength Frequency}
+         else
+            SharpName = if S then "#" else "" end
+            NoteName = {VirtualString.toString N#SharpName#O}
+            InstrumentName = {VirtualString.toString I}
+            FilePath = "wave/instruments/"
+            Format = ".wav"
+
+            NewInstrumentFilename = InstrumentName # "_" # NoteName
+            NewInstrumentPathname = FilePath # NewInstrumentFilename # Format
+            Result = {VirtualString.toString NewInstrumentPathname}
+
+            ExtractSamples = {Project2025.readFile Result}
+            SampleLength = {Length ExtractSamples}
+            CountSamples = {Float.toInt D * SampleRate}
+         in
+            if SampleLength >= CountSamples then {GetElements CountSamples ExtractSamples}
+            else Insert = {InsertZeros CountSamples-SampleLength}
+            in
+               {Append ExtractSamples Insert}
+            end
+         end
       else
-         raise error(invalidNoteOrSilence(NoteOrSilence)) end
-      end
+         raise error(wrongNoteOrSilence(NoteOrSilence)) end
+      end  
    end   
 
-   % Fusionne plusieurs listes de samples en sommant leurs éléments
+   % Fusionne plusieurs listes de samples en additionnant leurs éléments
    fun {MergeListsOfSamples ListOfSamples}
       fun {SumOfLists Lists}
          if {All Lists fun {$ L} L == nil end} then nil
@@ -141,14 +157,14 @@
       {SumOfLists ListOfSamples}
    end
 
-   % Convertit un accord (liste de notes étendues) en échantillons en fusionnant les notes
+   % Convertit un accord en échantillons en fusionnant les notes
    fun {ChordToSamples Chord}
       L = {Map Chord NoteToSamples}
    in
       {MergeListsOfSamples L}
    end
 
-   % Applique la bonne conversion selon que c'est une note, un silence ou un accord
+   % Applique la bonne conversion: une note, un silence ou un accord
    fun {SoundToSamples NoteOrSilence}
       case NoteOrSilence
       of note(...) then {NoteToSamples NoteOrSilence}
@@ -158,7 +174,7 @@
       end
    end
    
-   % Convertit une partition aplatie (liste de sons étendus) en échantillons
+   % Convertit une partition aplatie en échantillons
    fun {PartitionToSamples Flat}
       case Flat
       of nil then nil
@@ -202,7 +218,7 @@
       {List.take {MusicExtension Music Counter} Counter}
    end
 
-   % Applique un filtre clip : tronque ou restreint les valeurs d'une musique
+   % Applique un filtre pour tronquer ou restreindre les valeurs d'une musique
    fun {Clip Filter List}
       case Filter
       of clip(start:S duration:D music:_) then

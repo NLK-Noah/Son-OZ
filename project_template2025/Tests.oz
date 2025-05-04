@@ -1,12 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Projet Son'OZ - LINFO1104 (UCLouvain)
-%%
-%% Auteurs :
-%%   - Akman Kaan [0910-23-00]
-%%   - Moussaoui Noah [8231-23-00]
-%%
-%% Fichier : Tests.oz
-%% Description : Suite de tests unitaires pour PartitionToTimedList et Mix.
+%% Projet Son'OZ - LINFO1104
+%% Akman Kaan [0910-23-00]
+%% Moussaoui Noah [8231-23-00]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 functor
 import
@@ -18,8 +13,7 @@ export
    test: Test
 define
     % Variable qui permet d'activer nos extensions 
-    % Il suffit de switch à true pour activer l'extension
-    % et de switch à false pour la désactiver
+    % Il suffit de switch à true pour activer l'extension et de switch à false pour la désactiver
    ActivatorOfExtensions = false
    PassedTests = {Cell.new 0}
    TotalTests  = {Cell.new 0}

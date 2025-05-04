@@ -1,12 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Projet Son'OZ - LINFO1104 (UCLouvain)
-%%
-%% Auteurs :
-%%   - Akman Kaan [0910-23-00]
-%%   - Moussaoui Noah [8231-23-00]
-%%
-%% Fichier : PartitionToTimedList.oz
-%% Description : Transformation de partitions musicales vers le format étendu.
+%% Projet Son'OZ - LINFO1104
+%% Akman Kaan [0910-23-00]
+%% Moussaoui Noah [8231-23-00]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 functor
 import
@@ -18,11 +13,6 @@ export
    partitionToTimedList: PartitionToTimedList
 define
     % Convertit différents formats de note (atome, tuple, record) en note étendue.
-    % Si l'entrée est un silence sans durée, elle reçoit une durée par défaut.
-    % Si l'entrée est un atome 'a', une chaîne comme 'a4' ou un tuple comme 'a#4', elle est transformée en note complète.
-    % Si l'entrée est déjà une note étendue, elle est laissée telle quelle.
-    % Si l'entrée est un silence avec une durée, elle est laissée telle quelle.
-
     fun {NoteToExtended Note}
         case Note
         of nil then nil 
@@ -78,13 +68,6 @@ define
     end
 
     % Applique une transformation de durée sur une partition.
-    % La partition est d'abord convertie en format étendu.
-    % La durée totale est calculée en sommant les durées des notes et silences.
-    % On calcule la durée totale actuelle de la partition, puis on applique un facteur de mise à l'échelle
-    % pour obtenir exactement Seconds de durée finale. Les silences et notes sont multipliés.
-    % Les éléments non reconnus sont ignorés sans provoquer d'erreur.
-    % La durée est exprimée en secondes.
-
     fun {Duration Seconds Partition}
         Flattened = {PartitionToTimedList Partition}
         fun {DurationAux L}
@@ -120,7 +103,6 @@ define
     
     % Multiplie toutes les durées des éléments d'une partition par un facteur donné.
     % La partition est transformée note par note via NoteToExtended, puis chaque durée est étirée.
-    % Les éléments non reconnus sont ignorés sans provoquer d'erreur.
 
     fun {Stretch Factor Partition}
         case Partition
@@ -136,15 +118,13 @@ define
            [] silence(duration:D) then
               silence(duration:D * Factor) | {Stretch Factor T}
            else
-            {Stretch Factor T} % Ignore tout élément qui ne peut être étendu proprement
+            {Stretch Factor T}
            end
         end
     end       
 
     % Crée une séquence répétitive de notes ou d'accords.
     % Répète 'Amount' fois une note ou un accord donné.
-    % Si l'entrée est un accord (liste de listes), utilise ChordToExtended pour l'étendre.
-    % Sinon, traite l'entrée comme une liste de notes simples et les étend via NoteToExtended.
 
     fun {Drone NoteOrChord Amount}
         if Amount =< 0 then 
@@ -160,8 +140,6 @@ define
 
 
     % Génère une liste contenant 'Amount' silences d'une durée de 1.0 chacun.
-    % Utilisé pour insérer des passages silencieux dans une partition.
-    % Si Amount est nul ou négatif, retourne une liste vide.
 
     fun {Mute Amount}
       if Amount =< 0 then nil
@@ -171,8 +149,6 @@ define
     end
      
      % Associe à chaque note (nom + altération) un index chromatique entre 0 et 11.
-     % Utile pour effectuer des opérations comme la transposition.
-     % Si la note n'est pas reconnue, lève une erreur explicite.
 
      fun {NoteToIndex Name Sharp}
         case Name#Sharp
@@ -193,8 +169,6 @@ define
      end
 
      % Convertit un index chromatique (0 à 11) en une note (nom + altération).
-     % Utilisé lors de la transposition pour retrouver le nom correct d'une note après déplacement.
-     % L'index est normalisé pour rester entre 0 et 11 même si négatif (on additionne alors avec un multiple de 12).
 
      fun {IndexToNote Index}
         case (Index mod 12 + 12) mod 12
@@ -214,8 +188,6 @@ define
      end
 
      % Transpose une seule note d'un nombre de demi-tons donné.
-     % Gère correctement les cas de dépassement d'octave, vers le haut ou le bas.
-     % Utilise NoteToIndex pour retrouver l'index initial et IndexToNote pour recoder la note transposée.
 
      fun {TransposeAux Note Semitones}
         FirstIndex = {NoteToIndex Note.name Note.sharp}
@@ -233,8 +205,6 @@ define
      end
         
      % Transpose une partition complète (notes et accords) d'un nombre de demi-tons donné.
-     % Étend chaque note si nécessaire, puis applique TransposeNote pour ajuster le pitch.
-     % Les silences sont laissés intacts. Les accords (listes) sont traités récursivement.
 
      fun {Transpose Semitones Partition}
         case Partition
