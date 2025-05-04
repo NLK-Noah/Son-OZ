@@ -15,7 +15,7 @@
     % Variable qui permet d'activer nos extensions 
     % Il suffit de switch à true pour activer l'extension
     % et de switch à false pour la désactiver
-    ActivatorOfExtensions = true
+    ActivatorOfExtensions = false
     % Constantes
     Pi = 3.14159265358979323846
     SampleRate = 44100.0
